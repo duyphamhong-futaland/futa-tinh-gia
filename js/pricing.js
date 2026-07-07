@@ -37,11 +37,11 @@ const Pricing = (function(){
   /* Bộ đợt mặc định (đúng form CS PTTT chuẩn) */
   const DEFAULT_DOT = [
     {ten:"Đăng ký NV", tyLe:5,  mo:"5% Giá Trị Căn Hộ", tg:"Khi đăng ký nguyện vọng"},
-    {ten:"Đợt 1", tyLe:5,  mo:"5% Giá Trị Căn Hộ", tg:"Khi ký HĐMB"},
-    {ten:"Đợt 2", tyLe:10, mo:"10% Giá Trị Căn Hộ", tg:"Theo tiến độ CĐT"},
-    {ten:"Đợt 3", tyLe:10, mo:"10% Giá Trị Căn Hộ", tg:"Theo tiến độ CĐT"},
-    {ten:"Đợt 4", tyLe:20, mo:"20% Giá Trị Căn Hộ", tg:"Theo tiến độ CĐT"},
-    {ten:"Đợt 5", tyLe:20, mo:"20% Giá Trị Căn Hộ", tg:"Theo tiến độ CĐT"},
+    {ten:"Đợt 1", tyLe:5,  mo:"5% Giá Trị Căn Hộ", tg:"Trong 7 ngày từ ký HĐĐC", tgD:7},
+    {ten:"Đợt 2", tyLe:10, mo:"10% Giá Trị Căn Hộ", tgM:1},
+    {ten:"Đợt 3", tyLe:10, mo:"10% Giá Trị Căn Hộ", tgM:2},
+    {ten:"Đợt 4", tyLe:20, mo:"20% Giá Trị Căn Hộ", tgM:3},
+    {ten:"Đợt 5", tyLe:20, mo:"20% Giá Trị Căn Hộ", tgM:4},
     {ten:"Đợt 6", tyLe:25, mo:"25% Giá Trị Căn Hộ", tg:"Khi nhận bàn giao"},
     {ten:"Đợt 7", tyLe:5,  mo:"5% Giá Trị Căn Hộ", tg:"Khi cấp GCN"},
   ];

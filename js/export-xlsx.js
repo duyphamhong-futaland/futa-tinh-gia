@@ -6,6 +6,15 @@
    Tách nguyên logic từ Estella (_buildPhieuSheet) — chạy độc lập offline.
    ============================================================ */
 function todayVN(){ const d=new Date(); const p=n=>(n<10?'0':'')+n; return p(d.getDate())+'/'+p(d.getMonth()+1)+'/'+d.getFullYear(); }
+function fmtDateVN(d){ const p=n=>(n<10?'0':'')+n; return p(d.getDate())+'/'+p(d.getMonth()+1)+'/'+d.getFullYear(); }
+/* Thời gian/thời hạn đóng của 1 đợt — tính THEO NGÀY LẬP PHIẾU (hôm nay).
+   dt.tgD = số ngày kể từ hôm nay · dt.tgM = số tháng · dt.tg = nhãn/sự kiện. */
+function schedTimeStr(dt){
+  if(!dt) return '';
+  if(dt.tgD!=null){ const d=new Date(); d.setDate(d.getDate()+dt.tgD); return (dt.tg?dt.tg+' ':'')+'(≈ '+fmtDateVN(d)+')'; }
+  if(dt.tgM!=null){ const d=new Date(); d.setMonth(d.getMonth()+dt.tgM); return (dt.tg?dt.tg+' — ':'≈ ')+fmtDateVN(d); }
+  return dt.tg||'';
+}
 
 function _ensureExcelJS(cb){ if(window.ExcelJS){cb();return;}
   const s=document.createElement('script'); s.src='vendor/exceljs.min.js';
@@ -61,8 +70,8 @@ function _buildPhieuSheet(wb,p,method,mck,proj,wmId,dateStr){
   // Hướng căn hộ + View (dòng 5)
   if(p.huong||p.huongCua||p.view){
     ws.mergeCells('A5:E5');
-    const hInfo='Hướng ban công: '+(p.huong||'—')+'   ·   Cửa chính: '+(p.huongCua||'—')+(p.view?('   ·   View: '+p.view):'')+(p.viTri?('   ·   '+p.viTri):'');
-    C('A5',hInfo,{size:10,color:'FF425',border:false});
+    const hInfo='🧭 Hướng ban công: '+(p.huong||'—')+'   ·   Cửa chính: '+(p.huongCua||'—')+(p.view?('   ·   View: '+p.view):'')+(p.viTri?('   ·   '+p.viTri):'');
+    C('A5',hInfo,{size:10.5,bold:true,color:'FF1B7F3B',border:false});
   }
   // Gói nội thất tặng (DNTS)
   const ntVal=(p.duAnId==='P_DNTS'&&typeof POL!=='undefined')?(((POL.rates('residence')||{}).noiThat||{})[String(p.loai||'').toLowerCase().replace(/\s/g,'')]||0):0;
@@ -87,12 +96,12 @@ function _buildPhieuSheet(wb,p,method,mck,proj,wmId,dateStr){
   const dot=(method.dot||Pricing.DEFAULT_DOT||[]);
   const gcn=dot.find(x=>x.gcn); const gp=gcn?(gcn.tyLe/100):0; const vatF='ROUND(D14/1.12*'+gp+'*0.1,0)';
   ['Đợt thanh toán','Thời gian','Tỷ lệ','Giá trị (VNĐ)','Lũy kế'].forEach((t,i)=>C(String.fromCharCode(65+i)+'19',t,{head:true,bold:true,h:i>=2?'right':'left'}));
-  let r=20; C('A'+r,'Hợp đồng đặt cọc');C('B'+r,'Khi ký HĐ đặt cọc',{color:'FF6B7785',wrap:true});C('D'+r,100000000,{num:money,h:'right'});C('E'+r,{formula:'D'+r,result:100000000},{num:money,h:'right',color:'FF6B7785'}); let prevE=r; r++;
+  let r=20; C('A'+r,'Hợp đồng đặt cọc');C('B'+r,'Ngày lập phiếu ('+dateStr+')',{color:'FF6B7785',wrap:true});C('D'+r,100000000,{num:money,h:'right'});C('E'+r,{formula:'D'+r,result:100000000},{num:money,h:'right',color:'FF6B7785'}); let prevE=r; r++;
   const kpbtR=Math.round(d.giaPhaiTT/1.12*0.02);   // phí bảo trì theo giá sau CK (khớp B17)
   const vGcn=Math.round(d.giaPhaiTT/1.12*gp*0.1);
   dot.forEach(dt=>{
     C('A'+r,dt.ten,{wrap:true});
-    C('B'+r,dt.tg||'',{color:'FF6B7785',wrap:true});
+    C('B'+r,(typeof schedTimeStr==='function'?schedTimeStr(dt):(dt.tg||'')),{color:'FF6B7785',wrap:true});
     if(dt.pbt){ F('D'+r,'B17',kpbtR); }
     else {
       C('C'+r,dt.tyLe/100,{num:pf,h:'center'});

@@ -75,13 +75,13 @@ const POL = (function () {
     residence: {
       methods: [
         { key: 'thuong', label: 'PTTT giãn (chuẩn)', pct: 0, dot: [
-          {ten:'Đợt 1 (Ký HĐMB)',tyLe:20,coc:true,tg:'Khi ký HĐMB'},{ten:'Đợt 2',tyLe:10,tg:'Theo tiến độ CĐT'},{ten:'Đợt 3',tyLe:10,tg:'Theo tiến độ CĐT'},{ten:'Đợt 4',tyLe:10,tg:'Theo tiến độ CĐT'},
-          {ten:'Đợt 5',tyLe:10,tg:'Theo tiến độ CĐT'},{ten:'Đợt 6',tyLe:10,tg:'Theo tiến độ CĐT'},{ten:'Đợt 7',tyLe:10,tg:'Theo tiến độ CĐT'},{ten:'Đợt 8 (Bàn giao)',tyLe:15,vatGcn:true,tg:'Khi nhận bàn giao căn hộ'},{ten:'Đợt 9 (Cấp GCN)',tyLe:5,gcn:true,tg:'Khi có thông báo cấp GCN'} ] },
+          {ten:'Đợt 1 (Ký HĐMB)',tyLe:20,coc:true,tg:'Trong 7 ngày từ ký HĐĐC',tgD:7},{ten:'Đợt 2',tyLe:10,tgM:1},{ten:'Đợt 3',tyLe:10,tgM:2},{ten:'Đợt 4',tyLe:10,tgM:3},
+          {ten:'Đợt 5',tyLe:10,tgM:4},{ten:'Đợt 6',tyLe:10,tgM:5},{ten:'Đợt 7',tyLe:10,tgM:6},{ten:'Đợt 8 (Bàn giao)',tyLe:15,vatGcn:true,tg:'Khi nhận bàn giao căn hộ'},{ten:'Đợt 9 (Cấp GCN)',tyLe:5,gcn:true,tg:'Khi cấp GCN'} ] },
         { key: 'vay', label: 'PTTT Vay (vay ngân hàng)', pct: 0, dot: [
-          {ten:'Đợt 1 (Ký HĐMB)',tyLe:20,coc:true,tg:'Khi ký HĐMB'},{ten:'Đợt 2 (Ngân hàng)',tyLe:50,tg:'Khi ngân hàng giải ngân'},{ten:'Đợt 3 (KH — Phí bảo trì)',pbt:true,tg:'Khi nhận bàn giao'},
-          {ten:'Đợt 3 (Ngân hàng)',tyLe:25,vatGcn:true,tg:'Khi NH giải ngân (bàn giao)'},{ten:'Đợt 4 (Ngân hàng — Cấp GCN)',tyLe:5,gcn:true,tg:'Khi cấp GCN QSH'} ] },
+          {ten:'Đợt 1 (Ký HĐMB)',tyLe:20,coc:true,tg:'Trong 7 ngày từ ký HĐĐC',tgD:7},{ten:'Đợt 2 (Ngân hàng)',tyLe:50,tg:'Trong 15 ngày từ ký HĐMB',tgD:22},{ten:'Đợt 3 (KH — Phí bảo trì)',pbt:true,tg:'Trong 15 ngày từ TB bàn giao (dự kiến)'},
+          {ten:'Đợt 3 (Ngân hàng)',tyLe:25,vatGcn:true,tg:'Khi ngân hàng giải ngân (bàn giao)'},{ten:'Đợt 4 (Ngân hàng — Cấp GCN)',tyLe:5,gcn:true,tg:'Khi cấp GCN'} ] },
         { key: 'nhanh95', label: 'Nhanh 95%', pct: 0.10, dot: [
-          {ten:'Đợt 1 (Ký HĐMB — trong 7 ngày)',tyLe:95,coc:true,kpbt:true,vatGcn:true,tg:'Trong 7 ngày từ ký HĐĐC'},
+          {ten:'Đợt 1 (Ký HĐMB — trong 7 ngày)',tyLe:95,coc:true,kpbt:true,vatGcn:true,tg:'Trong 7 ngày từ ký HĐĐC',tgD:7},
           {ten:'Đợt 2 (Nhận GCN QSH)',tyLe:5,gcn:true,tg:'Khi nhận GCN QSH'} ] },
       ],
       muaSi: [{ min: 3, pct: 0.04 }, { min: 2, pct: 0.02 }], thanThiet: 0.01, ngoaiGiao: 0.10, htls: '12 tháng',

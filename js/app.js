@@ -45,7 +45,7 @@ function scheduleRows(u, deal, method){
   const kpbtVal=Math.round(A*0.02);            // phí bảo trì theo giá sau CK
   const vatGcn=Math.round(A*gp*0.1);           // VAT của phần GCN (đợt cuối)
   const base=deal.giaPhaiTT-kpbtVal;           // = giá trị căn hộ gồm VAT
-  const rows=[{ten:'Hợp đồng đặt cọc', tyLe:null, soTien:100000000, tg:'Khi ký HĐ đặt cọc'}];
+  const rows=[{ten:'Hợp đồng đặt cọc', tyLe:null, soTien:100000000, tg:'Ngày lập phiếu ('+todayVN()+')'}];
   dot.forEach(dt=>{
     let soTien;
     if(dt.pbt){ soTien=kpbtVal; }
@@ -56,7 +56,7 @@ function scheduleRows(u, deal, method){
       if(dt.gcn) soTien-=vatGcn;               // − VAT (đợt cuối không gồm VAT)
       if(dt.coc) soTien-=100000000;            // − đặt cọc
     }
-    rows.push({ten:dt.ten, tyLe:dt.pbt?null:dt.tyLe, soTien, tg:dt.tg||''});
+    rows.push({ten:dt.ten, tyLe:dt.pbt?null:dt.tyLe, soTien, tg:(typeof schedTimeStr==='function'?schedTimeStr(dt):(dt.tg||''))});
   });
   let acc=0; rows.forEach(r=>{ acc+=r.soTien; r.luyKe=acc; });
   return rows;
@@ -212,7 +212,10 @@ function printPhieu(){
   <div class="sub">Dự án: <b>${esc(projName(u))}</b> — Phương thức: <b>${esc(method.label)}</b></div>
   <table class="info"><tr><td><b>Mã sản phẩm:</b> ${esc(u.ma)}</td><td><b>Tháp/Khu:</b> ${esc(u.block||'—')}</td></tr>
     <tr><td><b>Tầng/Lô:</b> ${esc(u.tang||u.lo||'—')}</td><td><b>Loại:</b> ${esc(u.loai||'—')}</td></tr>
-    <tr><td><b>DT thông thủy:</b> ${u.ttuy?(+u.ttuy).toFixed(2)+' m²':'—'}</td><td><b>DT tim tường:</b> ${u.tim?(+u.tim).toFixed(2)+' m²':'—'}</td></tr></table>
+    <tr><td><b>DT thông thủy:</b> ${u.ttuy?(+u.ttuy).toFixed(2)+' m²':'—'}</td><td><b>DT tim tường:</b> ${u.tim?(+u.tim).toFixed(2)+' m²':'—'}</td></tr>
+    ${(u.huong||u.huongCua)?`<tr><td><b>Hướng ban công:</b> ${esc(u.huong||'—')}</td><td><b>Hướng cửa chính:</b> ${esc(u.huongCua||'—')}</td></tr>`:''}
+    ${(u.view||u.viTri)?`<tr><td colspan="2"><b>View / Vị trí:</b> ${esc([u.view,u.viTri].filter(Boolean).join(' · '))}</td></tr>`:''}</table>
+  ${goiNoiThat(u)?`<div style="background:#fff5e6;border:1px solid #f0d29a;border-radius:6px;padding:8px 12px;margin:8px 0;color:#8a5a00;font-size:11.5pt">🎁 <b>Tặng gói nội thất trị giá ${fmtVN(goiNoiThat(u))}đ</b> — hoàn thiện nội thất trong 45 ngày kể từ ngày bàn giao · ưu đãi khấu trừ trực tiếp vào giá bán</div>`:''}
   <table><tr><th>Chương trình bán hàng</th><th class="r">Giá trị (VNĐ)</th></tr>
     <tr><td><b>Giá niêm yết (gồm VAT & PBT)</b></td><td class="r"><b>${fmtVN(deal.giaNiemYet)}</b></td></tr>
     ${ckLine('Khách hàng thân thiết',deal.lines[0].amount)}
@@ -222,8 +225,8 @@ function printPhieu(){
   </table>
   <div class="benefit"><span>🎁 TỔNG ƯU ĐÃI — Quý khách được lợi</span><b>− ${fmtVN(deal.tongCK)} đ</b></div>
   <div class="final"><span>GIÁ PHẢI THANH TOÁN</span><b>${fmtVN(deal.giaPhaiTT)} đ</b></div>
-  <table><tr><th>Đợt thanh toán</th><th class="r">Tỷ lệ</th><th class="r">Số tiền (VNĐ)</th><th class="r">Luỹ kế</th></tr>
-    ${rows.map(r=>`<tr><td>${esc(r.ten)}</td><td class="r">${r.tyLe!=null?r.tyLe+'%':''}</td><td class="r">${fmtVN(r.soTien)}</td><td class="r">${fmtVN(r.luyKe)}</td></tr>`).join('')}
+  <table><tr><th>Đợt thanh toán</th><th>Thời gian</th><th class="r">Tỷ lệ</th><th class="r">Số tiền (VNĐ)</th><th class="r">Luỹ kế</th></tr>
+    ${rows.map(r=>`<tr><td>${esc(r.ten)}</td><td style="font-size:10.5pt">${esc(r.tg||'')}</td><td class="r">${r.tyLe!=null?r.tyLe+'%':''}</td><td class="r">${fmtVN(r.soTien)}</td><td class="r">${fmtVN(r.luyKe)}</td></tr>`).join('')}
   </table>
   <div class="sign"><div>KHÁCH HÀNG<br><span style="font-weight:normal;color:#666">(Ký, ghi rõ họ tên)</span></div>
     <div>TƯ VẤN VIÊN<br><span style="font-weight:normal;color:#666">(Ký, ghi rõ họ tên)</span></div></div>
