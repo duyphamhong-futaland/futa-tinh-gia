@@ -107,4 +107,23 @@ main{flex:1;display:grid;grid-template-columns:minmax(420px,1fr) minmax(440px,1.
 .m-tbl .code{font-family:ui-monospace,Menlo,monospace;font-size:12px}
 .m-tbl .empty{text-align:center;color:var(--muted);padding:22px}
 
-@media(max-width:900px){ main{grid-template-columns:1fr} .d-grid,.ck-inputs,.m-grid{grid-template-columns:1fr} }
+/* Nút quay lại (chỉ hiện trên mobile) */
+.d-back{display:none;align-items:center;gap:6px;background:#eef2f7;border:1px solid var(--line);border-radius:8px;padding:8px 14px;font-size:14px;font-weight:600;color:#334;cursor:pointer;margin-bottom:12px}
+
+@media(max-width:900px){
+  main{grid-template-columns:1fr;gap:0;padding:12px}
+  .d-grid,.ck-inputs,.m-grid{grid-template-columns:1fr 1fr}
+  /* Master–detail: mặc định xem DANH SÁCH; chọn căn → xem phần TÍNH GIÁ full màn hình */
+  .panel.right{display:none}
+  body.show-detail .panel.left{display:none}
+  body.show-detail .panel.right{display:block}
+  .d-back{display:inline-flex}
+  /* tối ưu thao tác chạm */
+  .d-head{position:sticky;top:0;background:#fff;z-index:2;padding-top:2px;margin:-2px 0 12px}
+  .d-acts{width:100%} .d-acts .btn{flex:1;padding:11px}
+  .unit-table td{padding:11px 10px}   /* dòng cao hơn cho dễ chạm */
+  .list-wrap{max-height:none}
+  .ck-inputs input{padding:11px}
+  .final b{font-size:22px}
+}
+@media(max-width:520px){ .d-grid,.ck-inputs,.m-grid{grid-template-columns:1fr} }

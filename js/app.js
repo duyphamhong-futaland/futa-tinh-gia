@@ -92,16 +92,20 @@ function selectUnit(ma){
   State.unit=(window.PRICING_UNITS||[]).find(u=>u.ma===ma); if(!State.unit) return;
   const ms=methodsOf(State.unit); State.method=(ms[0]||{}).key||'';
   renderList(); renderDetail();
+  // Mobile: mở phần tính giá full màn hình (khỏi cuộn qua danh sách dài)
+  if(window.innerWidth<=900){ document.body.classList.add('show-detail'); window.scrollTo(0,0); }
 }
+function backToList(){ document.body.classList.remove('show-detail'); window.scrollTo(0,0); }
 function setMethod(k){ State.method=k; renderDetail(); }
 function setCK(kind,v){ State.manual[kind]=Math.max(0,(+v||0))/100; renderDetailNumbers(); }
 
 function renderDetail(){
   const wrap=document.getElementById('detail');
   const u=State.unit;
-  if(!u){ wrap.innerHTML=`<div class="empty-detail">👈 Chọn một căn ở danh sách để tính giá</div>`; return; }
+  if(!u){ document.body.classList.remove('show-detail'); wrap.innerHTML=`<div class="empty-detail">👈 Chọn một căn ở danh sách để tính giá</div>`; return; }
   const {methods}=currentDeal();
   wrap.innerHTML=`
+    <button class="d-back" onclick="backToList()">← Danh sách căn</button>
     <div class="d-head">
       <div><div class="d-ma">${esc(u.ma)}</div><div class="d-sub">${esc(projName(u))} · ${esc(u.block||'')}${u.tang?(' · Tầng '+esc(u.tang)):''}${u.loai?(' · '+esc(u.loai)):''}</div></div>
       <div class="d-acts">
