@@ -8,7 +8,19 @@ function pct(v){ return (+((+v||0)*100).toFixed(2))+'%'; }
 function toast(msg,type){ let t=document.getElementById('toast'); if(!t){t=document.createElement('div');t.id='toast';document.body.appendChild(t);}
   t.textContent=msg; t.className='show '+(type||''); clearTimeout(window._tt); window._tt=setTimeout(()=>t.className='',2600); }
 
-const State = { unit:null, method:'', manual:{thanThiet:0,muaSi:0,dacBiet:0}, proj:'', block:'', q:'' };
+const State = { unit:null, method:'', manual:{thanThiet:0,muaSi:0,dacBiet:0,noiThat:0}, noiThatText:'', giaOverride:null, proj:'', block:'', q:'' };
+
+/* Đọc số nguyên từ chuỗi nhập tay (bỏ mọi ký tự không phải số). '' → null */
+function parseIntVN(s){ if(s==null) return null; const d=String(s).replace(/[^\d]/g,''); return d===''?null:parseInt(d,10); }
+/* Giá niêm yết mặc định của căn (gồm VAT & PBT) */
+function giaDefaultOf(u){ return u?(u.giaTong||u.giaVAT||u.giaCB||0):0; }
+/* Căn "hiệu lực" cho phiếu hiện tại — nếu người dùng ghi đè giá thì suy lại các trường giá (giaTong = giaCB×1.12) */
+function effUnit(){
+  const u=State.unit; if(!u) return u;
+  if(State.giaOverride==null) return u;
+  const g=Math.max(0,Math.round(State.giaOverride));
+  return Object.assign({},u,{giaTong:g, giaVAT:Math.round(g/1.12*1.10), giaCB:Math.round(g/1.12), kpbt:Math.round(g/1.12*0.02)});
+}
 
 function projName(u){ const p=(window.PRICING_PROJECTS||[]).find(x=>x.id===(u&&u.duAnId)); return p?p.ten:(u&&u.duAnId)||''; }
 /* Gói nội thất tặng (chỉ DNTS): Studio/1PN 100tr · 2PN 200tr — theo loại căn */
@@ -32,9 +44,9 @@ function unitList(){
 function polOf(u){ return (typeof POL!=='undefined')?POL.byName(projName(u)):null; }
 function methodsOf(u){ const pol=polOf(u); return pol?POL.methods(pol.key):[{key:'thuong',label:'Tiêu chuẩn',pct:0,dot:Pricing.DEFAULT_DOT}]; }
 function currentDeal(){
-  const u=State.unit; const ms=methodsOf(u);
+  const ms=methodsOf(State.unit);
   const method=ms.find(m=>m.key===State.method)||ms[0]||{key:'',label:'',pct:0};
-  const deal=Pricing.dealCalc(u,{nhanh:method.pct||0, thanThiet:State.manual.thanThiet, muaSi:State.manual.muaSi, dacBiet:State.manual.dacBiet});
+  const deal=Pricing.dealCalc(effUnit(),{nhanh:method.pct||0, thanThiet:State.manual.thanThiet, muaSi:State.manual.muaSi, dacBiet:State.manual.dacBiet, noiThat:State.manual.noiThat, noiThatText:State.noiThatText});
   return {deal, method, methods:ms};
 }
 /* Lịch thanh toán theo phương thức (cùng logic xuất Excel) */
@@ -105,6 +117,8 @@ function onSearch(v){ State.q=v; renderList(); }
 function selectUnit(ma){
   State.unit=(window.PRICING_UNITS||[]).find(u=>u.ma===ma); if(!State.unit) return;
   const ms=methodsOf(State.unit); State.method=(ms[0]||{}).key||'';
+  State.giaOverride=null;                              // dùng lại giá gốc của căn vừa chọn
+  State.noiThatText=''; State.manual.noiThat=0;        // khuyến mãi nội thất là tuỳ chọn — reset theo từng căn
   renderList(); renderDetail();
   // Mobile: mở phần tính giá full màn hình (khỏi cuộn qua danh sách dài)
   if(window.innerWidth<=900){ document.body.classList.add('show-detail'); window.scrollTo(0,0); }
@@ -112,6 +126,17 @@ function selectUnit(ma){
 function backToList(){ document.body.classList.remove('show-detail'); window.scrollTo(0,0); }
 function setMethod(k){ State.method=k; renderDetail(); }
 function setCK(kind,v){ State.manual[kind]=Math.max(0,(+v||0))/100; renderDetailNumbers(); }
+/* Giá niêm yết tự nhập — bỏ trống thì quay về giá gốc của căn */
+function setGia(v){ const n=parseIntVN(v); State.giaOverride=(n==null)?null:Math.max(0,n); renderDetailNumbers(); }
+function onGiaBlur(el){ el.value=fmtVN(State.giaOverride!=null?State.giaOverride:giaDefaultOf(State.unit)); }
+/* Khuyến mãi giảm giá nội thất — nội dung tự do + số tiền tự nhập */
+function setNoiThatText(v){ State.noiThatText=v; renderDetailNumbers(); }
+function setNoiThatAmt(v){ State.manual.noiThat=Math.max(0,parseIntVN(v)||0); renderDetailNumbers(); }
+function onNoiThatBlur(el){ el.value=State.manual.noiThat?fmtVN(State.manual.noiThat):''; }
+/* Điền nhanh gợi ý gói nội thất theo chính sách (chỉ DNTS) */
+function fillNoiThatSuggest(){ const amt=goiNoiThat(State.unit); if(!amt) return;
+  State.noiThatText='Tặng gói nội thất (hoàn thiện nội thất trong 45 ngày kể từ bàn giao)';
+  State.manual.noiThat=amt; renderDetail(); }
 
 function renderDetail(){
   const wrap=document.getElementById('detail');
@@ -135,15 +160,22 @@ function renderDetail(){
       ${u.huongCua?`<div class="fld"><label>Hướng cửa chính</label><div class="val">${esc(u.huongCua)}</div></div>`:''}
       ${u.view?`<div class="fld"><label>View / Vị trí</label><div class="val">${esc(u.view)}${u.viTri?' · '+esc(u.viTri):''}</div></div>`:''}
     </div>
-    ${goiNoiThat(u)?`<div class="noithat-box">🎁 <b>Tặng gói nội thất trị giá ${fmtVN(goiNoiThat(u))}đ</b> — hoàn thiện nội thất trong 45 ngày kể từ ngày bàn giao · ưu đãi khấu trừ trực tiếp vào giá bán</div>`:''}
     <div class="ck-box">
-      <div class="ck-title">Phương thức thanh toán</div>
+      <div class="ck-title">Giá niêm yết (gồm VAT &amp; PBT) — có thể sửa</div>
+      <input type="text" inputmode="numeric" id="giaInput" class="gia-input" value="${fmtVN(State.giaOverride!=null?State.giaOverride:giaDefaultOf(u))}" oninput="setGia(this.value)" onblur="onGiaBlur(this)">
+      <div class="gia-hint">Để trống → dùng lại giá gốc của căn (${fmtVN(giaDefaultOf(u))}đ). Mọi chiết khấu &amp; tiến độ tính theo giá này.</div>
+      <div class="ck-title" style="margin-top:12px">Phương thức thanh toán</div>
       <select id="methodSel" onchange="setMethod(this.value)">${methods.map(m=>`<option value="${m.key}"${m.key===State.method?' selected':''}>${esc(m.label)}${m.pct?(' — CK '+pct(m.pct)):''}</option>`).join('')}</select>
       <div class="ck-title" style="margin-top:12px">Chiết khấu thêm (tuỳ chọn)</div>
       <div class="ck-inputs">
         <label>Thân thiết <span>%</span><input type="number" min="0" step="0.5" value="${State.manual.thanThiet*100||''}" oninput="setCK('thanThiet',this.value)"></label>
         <label>Mua sỉ <span>%</span><input type="number" min="0" step="0.5" value="${State.manual.muaSi*100||''}" oninput="setCK('muaSi',this.value)"></label>
         <label>Đặc biệt <span>%</span><input type="number" min="0" step="0.5" value="${State.manual.dacBiet*100||''}" oninput="setCK('dacBiet',this.value)"></label>
+      </div>
+      <div class="ck-title" style="margin-top:12px">Khuyến mãi giảm giá nội thất (tuỳ chọn)${goiNoiThat(u)?` <button type="button" class="nt-suggest" onclick="fillNoiThatSuggest()">Gợi ý: ${fmtVN(goiNoiThat(u))}đ</button>`:''}</div>
+      <div class="nt-inputs">
+        <input type="text" id="ntText" placeholder="Nội dung (VD: Tặng gói nội thất cao cấp)" value="${esc(State.noiThatText)}" oninput="setNoiThatText(this.value)">
+        <label>Số tiền <span>đ</span><input type="text" inputmode="numeric" value="${State.manual.noiThat?fmtVN(State.manual.noiThat):''}" oninput="setNoiThatAmt(this.value)" onblur="onNoiThatBlur(this)"></label>
       </div>
     </div>
     <div id="detailNumbers"></div>`;
@@ -158,6 +190,7 @@ function renderDetailNumbers(){
   if(deal.lines[1].amount) ckHtml+=line('Chiết khấu mua sỉ',deal.lines[1].amount,State.manual.muaSi);
   if(deal.lines[2].amount) ckHtml+=line('Chiết khấu đặc biệt',deal.lines[2].amount,State.manual.dacBiet);
   if(deal.lines[3].amount) ckHtml+=line('Thanh toán nhanh',deal.lines[3].amount,method.pct);
+  if(deal.noiThat) ckHtml+=line('🛋 '+(deal.noiThatText||'Khuyến mãi giảm giá nội thất'),deal.noiThat,0);
   const rows=scheduleRows(State.unit,deal,method);
   document.getElementById('detailNumbers').innerHTML=`
     <div class="pr-card">
@@ -175,7 +208,7 @@ function renderDetailNumbers(){
 }
 
 function doExport(){ if(!State.unit){toast('Chọn căn trước','err');return;}
-  exportPhieuXLSX(State.unit, State.manual, projName(State.unit)); }
+  exportPhieuXLSX(effUnit(), Object.assign({}, State.manual, {noiThatText:State.noiThatText}), projName(State.unit)); }
 
 /* ---- In phiếu A4 (đậm + tô màu chiết khấu để khách thấy lợi ích) ---- */
 function printPhieu(){
@@ -215,13 +248,13 @@ function printPhieu(){
     <tr><td><b>DT thông thủy:</b> ${u.ttuy?(+u.ttuy).toFixed(2)+' m²':'—'}</td><td><b>DT tim tường:</b> ${u.tim?(+u.tim).toFixed(2)+' m²':'—'}</td></tr>
     ${(u.huong||u.huongCua)?`<tr><td><b>Hướng ban công:</b> ${esc(u.huong||'—')}</td><td><b>Hướng cửa chính:</b> ${esc(u.huongCua||'—')}</td></tr>`:''}
     ${(u.view||u.viTri)?`<tr><td colspan="2"><b>View / Vị trí:</b> ${esc([u.view,u.viTri].filter(Boolean).join(' · '))}</td></tr>`:''}</table>
-  ${goiNoiThat(u)?`<div style="background:#fff5e6;border:1px solid #f0d29a;border-radius:6px;padding:8px 12px;margin:8px 0;color:#8a5a00;font-size:11.5pt">🎁 <b>Tặng gói nội thất trị giá ${fmtVN(goiNoiThat(u))}đ</b> — hoàn thiện nội thất trong 45 ngày kể từ ngày bàn giao · ưu đãi khấu trừ trực tiếp vào giá bán</div>`:''}
   <table><tr><th>Chương trình bán hàng</th><th class="r">Giá trị (VNĐ)</th></tr>
     <tr><td><b>Giá niêm yết (gồm VAT & PBT)</b></td><td class="r"><b>${fmtVN(deal.giaNiemYet)}</b></td></tr>
     ${ckLine('Khách hàng thân thiết',deal.lines[0].amount)}
     ${ckLine('Chiết khấu mua sỉ',deal.lines[1].amount)}
     ${ckLine('Chiết khấu đặc biệt / khác',deal.lines[2].amount)}
     ${ckLine('Chiết khấu thanh toán nhanh',deal.lines[3].amount)}
+    ${ckLine(esc(deal.noiThatText||'Khuyến mãi giảm giá nội thất'),deal.noiThat)}
   </table>
   <div class="benefit"><span>🎁 TỔNG ƯU ĐÃI — Quý khách được lợi</span><b>− ${fmtVN(deal.tongCK)} đ</b></div>
   <div class="final"><span>GIÁ PHẢI THANH TOÁN</span><b>${fmtVN(deal.giaPhaiTT)} đ</b></div>

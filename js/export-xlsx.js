@@ -44,7 +44,7 @@ function exportPhieuXLSX(p, mck, projName){
 }
 
 function _buildPhieuSheet(wb,p,method,mck,proj,wmId,dateStr){
-  const d=Pricing.dealCalc(p,{nhanh:method.pct||0,thanThiet:mck.thanThiet,muaSi:mck.muaSi,dacBiet:mck.dacBiet});
+  const d=Pricing.dealCalc(p,{nhanh:method.pct||0,thanThiet:mck.thanThiet,muaSi:mck.muaSi,dacBiet:mck.dacBiet,noiThat:mck.noiThat,noiThatText:mck.noiThatText});
   const nm=(method.label||'PT').replace(/[\\\/*?:\[\]]/g,'').slice(0,31);
   const ws=wb.addWorksheet(nm,{views:[{showGridLines:false}]});
   ws.columns=[{width:40},{width:24},{width:10},{width:22},{width:20}];
@@ -73,40 +73,43 @@ function _buildPhieuSheet(wb,p,method,mck,proj,wmId,dateStr){
     const hInfo='🧭 Hướng ban công: '+(p.huong||'—')+'   ·   Cửa chính: '+(p.huongCua||'—')+(p.view?('   ·   View: '+p.view):'')+(p.viTri?('   ·   '+p.viTri):'');
     C('A5',hInfo,{size:10.5,bold:true,color:'FF1B7F3B',border:false});
   }
-  // Gói nội thất tặng (DNTS)
-  const ntVal=(p.duAnId==='P_DNTS'&&typeof POL!=='undefined')?(((POL.rates('residence')||{}).noiThat||{})[String(p.loai||'').toLowerCase().replace(/\s/g,'')]||0):0;
-  if(ntVal){ ws.mergeCells('A15:E15'); C('A15','🎁 Tặng gói nội thất '+ (typeof fmtVN==='function'?fmtVN(ntVal):ntVal) +'đ — hoàn thiện nội thất ≤45 ngày, khấu trừ trực tiếp vào giá bán',{fill:GOLD,size:10,color:'FF8a5a00'}); }
-  // Chương trình bán hàng
-  C('A6','CHƯƠNG TRÌNH BÁN HÀNG',{head:true,bold:true});C('B6','',{head:true});C('C6','Tỷ lệ',{head:true,bold:true,h:'center'});C('D6','Giá trị (VNĐ)',{head:true,bold:true,h:'right'});C('E6','',{head:true});
-  C('A7','(1) Giá niêm yết trước CK (gồm VAT & PBT)',{bold:true});C('D7',d.giaNiemYet,{num:money,h:'right',bold:true});
-  C('A8','Giá trị căn bán (chưa VAT) — cơ sở tính CK',{color:'FF6B7785'});C('D8',d.giaCB,{num:money,h:'right',color:'FF6B7785'});
-  C('A9','(2) Khách hàng thân thiết');C('C9',+mck.thanThiet||0,{num:pf,h:'center'});F('D9','ROUND(D8*C9,0)',d.lines[0].amount,{color:RED});
-  C('A10','(3) Chiết khấu mua sỉ');C('C10',+mck.muaSi||0,{num:pf,h:'center'});F('D10','ROUND((D8-D9)*C10,0)',d.lines[1].amount,{color:RED});
-  C('A11','(4) Chiết khấu đặc biệt / khác');C('C11',+mck.dacBiet||0,{num:pf,h:'center'});F('D11','ROUND((D8-D9-D10)*C11,0)',d.lines[2].amount,{color:RED});
-  C('A12','(5) Chiết khấu thanh toán nhanh');C('C12',+method.pct||0,{num:pf,h:'center'});F('D12','ROUND((D8-D9-D10-D11)*C12,0)',d.lines[3].amount,{color:RED});
-  C('A13','(6) TỔNG ƯU ĐÃI — KHÁCH ĐƯỢC LỢI',{bold:true,fill:GOLD});F('D13','D9+D10+D11+D12',d.tongCK,{bold:true,color:RED,fill:GOLD,size:12});
-  C('A14','(7) GIÁ PHẢI THANH TOÁN (7 = 1 − 6)',{bold:true,fill:LG,size:12});F('D14','D7-D13',d.giaPhaiTT,{bold:true,color:GREEN,fill:LG,size:12});
+  // ===== Chương trình bán hàng (số dòng động — chèn dòng nội thất khi có) =====
+  let r=6;
+  const rHead=r; C('A'+r,'CHƯƠNG TRÌNH BÁN HÀNG',{head:true,bold:true});C('B'+r,'',{head:true});C('C'+r,'Tỷ lệ',{head:true,bold:true,h:'center'});C('D'+r,'Giá trị (VNĐ)',{head:true,bold:true,h:'right'});C('E'+r,'',{head:true}); r++;
+  const rNY=r; C('A'+rNY,'(1) Giá niêm yết trước CK (gồm VAT & PBT)',{bold:true});C('D'+rNY,d.giaNiemYet,{num:money,h:'right',bold:true}); r++;
+  const rCB=r; C('A'+rCB,'Giá trị căn bán (chưa VAT) — cơ sở tính CK',{color:'FF6B7785'});C('D'+rCB,d.giaCB,{num:money,h:'right',color:'FF6B7785'}); r++;
+  const rThan=r; C('A'+rThan,'(2) Khách hàng thân thiết');C('C'+rThan,+mck.thanThiet||0,{num:pf,h:'center'});F('D'+rThan,'ROUND(D'+rCB+'*C'+rThan+',0)',d.lines[0].amount,{color:RED}); r++;
+  const rMua=r; C('A'+rMua,'(3) Chiết khấu mua sỉ');C('C'+rMua,+mck.muaSi||0,{num:pf,h:'center'});F('D'+rMua,'ROUND((D'+rCB+'-D'+rThan+')*C'+rMua+',0)',d.lines[1].amount,{color:RED}); r++;
+  const rDac=r; C('A'+rDac,'(4) Chiết khấu đặc biệt / khác');C('C'+rDac,+mck.dacBiet||0,{num:pf,h:'center'});F('D'+rDac,'ROUND((D'+rCB+'-D'+rThan+'-D'+rMua+')*C'+rDac+',0)',d.lines[2].amount,{color:RED}); r++;
+  const rNhanh=r; C('A'+rNhanh,'(5) Chiết khấu thanh toán nhanh');C('C'+rNhanh,+method.pct||0,{num:pf,h:'center'});F('D'+rNhanh,'ROUND((D'+rCB+'-D'+rThan+'-D'+rMua+'-D'+rDac+')*C'+rNhanh+',0)',d.lines[3].amount,{color:RED}); r++;
+  let rNoi=0;
+  if(d.noiThat){ rNoi=r; C('A'+rNoi,'(6) '+(d.noiThatText||'Khuyến mãi giảm giá nội thất'),{wrap:true});C('D'+rNoi,d.noiThat,{num:money,h:'right',color:RED}); r++; }
+  const rTong=r; C('A'+rTong,'TỔNG ƯU ĐÃI — KHÁCH ĐƯỢC LỢI',{bold:true,fill:GOLD});F('D'+rTong,'D'+rThan+'+D'+rMua+'+D'+rDac+'+D'+rNhanh+(rNoi?'+D'+rNoi:''),d.tongCK,{bold:true,color:RED,fill:GOLD,size:12}); r++;
+  const rTT=r; C('A'+rTT,'GIÁ PHẢI THANH TOÁN (= (1) − TỔNG ƯU ĐÃI)',{bold:true,fill:LG,size:12});F('D'+rTT,'D'+rNY+'-D'+rTong,d.giaPhaiTT,{bold:true,color:GREEN,fill:LG,size:12}); r++;
+  r++; // dòng trống ngăn cách
   // Chi tiết báo giá
-  ['Giá bán chưa VAT (A)','Phí bảo trì (B) = 2%×A','Thuế GTGT VAT (C)','Tổng GTCH (D)=A+B+C'].forEach((t,i)=>C(String.fromCharCode(65+i)+'16',t,{head:true,bold:true,h:'center',wrap:true}));
-  F('A17','ROUND(D14/1.12,0)',Math.round(d.giaPhaiTT/1.12),{h:'right'});
-  F('B17','ROUND(A17*0.02,0)',Math.round(d.giaPhaiTT/1.12*0.02),{h:'right'});
-  F('C17','ROUND(A17*0.1,0)',Math.round(d.giaPhaiTT/1.12*0.10),{h:'right'});
-  F('D17','A17+B17+C17',d.giaPhaiTT,{h:'right',bold:true});
+  const rDetH=r; ['Giá bán chưa VAT (A)','Phí bảo trì (B) = 2%×A','Thuế GTGT VAT (C)','Tổng GTCH (D)=A+B+C'].forEach((t,i)=>C(String.fromCharCode(65+i)+rDetH,t,{head:true,bold:true,h:'center',wrap:true})); r++;
+  const rDet=r;
+  F('A'+rDet,'ROUND(D'+rTT+'/1.12,0)',Math.round(d.giaPhaiTT/1.12),{h:'right'});
+  F('B'+rDet,'ROUND(A'+rDet+'*0.02,0)',Math.round(d.giaPhaiTT/1.12*0.02),{h:'right'});
+  F('C'+rDet,'ROUND(A'+rDet+'*0.1,0)',Math.round(d.giaPhaiTT/1.12*0.10),{h:'right'});
+  F('D'+rDet,'A'+rDet+'+B'+rDet+'+C'+rDet,d.giaPhaiTT,{h:'right',bold:true}); r++;
+  r++; // dòng trống ngăn cách
   // Đợt thanh toán
   const dot=(method.dot||Pricing.DEFAULT_DOT||[]);
-  const gcn=dot.find(x=>x.gcn); const gp=gcn?(gcn.tyLe/100):0; const vatF='ROUND(D14/1.12*'+gp+'*0.1,0)';
-  ['Đợt thanh toán','Thời gian','Tỷ lệ','Giá trị (VNĐ)','Lũy kế'].forEach((t,i)=>C(String.fromCharCode(65+i)+'19',t,{head:true,bold:true,h:i>=2?'right':'left'}));
-  let r=20; C('A'+r,'Hợp đồng đặt cọc');C('B'+r,'Ngày lập phiếu ('+dateStr+')',{color:'FF6B7785',wrap:true});C('D'+r,100000000,{num:money,h:'right'});C('E'+r,{formula:'D'+r,result:100000000},{num:money,h:'right',color:'FF6B7785'}); let prevE=r; r++;
-  const kpbtR=Math.round(d.giaPhaiTT/1.12*0.02);   // phí bảo trì theo giá sau CK (khớp B17)
+  const gcn=dot.find(x=>x.gcn); const gp=gcn?(gcn.tyLe/100):0; const vatF='ROUND(D'+rTT+'/1.12*'+gp+'*0.1,0)';
+  const rSchH=r; ['Đợt thanh toán','Thời gian','Tỷ lệ','Giá trị (VNĐ)','Lũy kế'].forEach((t,i)=>C(String.fromCharCode(65+i)+rSchH,t,{head:true,bold:true,h:i>=2?'right':'left'})); r++;
+  C('A'+r,'Hợp đồng đặt cọc');C('B'+r,'Ngày lập phiếu ('+dateStr+')',{color:'FF6B7785',wrap:true});C('D'+r,100000000,{num:money,h:'right'});C('E'+r,{formula:'D'+r,result:100000000},{num:money,h:'right',color:'FF6B7785'}); let prevE=r; r++;
+  const kpbtR=Math.round(d.giaPhaiTT/1.12*0.02);   // phí bảo trì theo giá sau CK (khớp B{rDet})
   const vGcn=Math.round(d.giaPhaiTT/1.12*gp*0.1);
   dot.forEach(dt=>{
     C('A'+r,dt.ten,{wrap:true});
     C('B'+r,(typeof schedTimeStr==='function'?schedTimeStr(dt):(dt.tg||'')),{color:'FF6B7785',wrap:true});
-    if(dt.pbt){ F('D'+r,'B17',kpbtR); }
+    if(dt.pbt){ F('D'+r,'B'+rDet,kpbtR); }
     else {
       C('C'+r,dt.tyLe/100,{num:pf,h:'center'});
-      let bF='ROUND((D14-B17)*C'+r+',0)', bV=Math.round((d.giaPhaiTT-kpbtR)*dt.tyLe/100), fx='', vx=0;
-      if(dt.kpbt){ fx+='+B17'; vx+=kpbtR; }
+      let bF='ROUND((D'+rTT+'-B'+rDet+')*C'+r+',0)', bV=Math.round((d.giaPhaiTT-kpbtR)*dt.tyLe/100), fx='', vx=0;
+      if(dt.kpbt){ fx+='+B'+rDet; vx+=kpbtR; }
       if(dt.vatGcn){ fx+='+'+vatF; vx+=vGcn; }
       if(dt.gcn){ fx+='-'+vatF; vx-=vGcn; }
       if(dt.coc){ fx+='-100000000'; vx-=100000000; }

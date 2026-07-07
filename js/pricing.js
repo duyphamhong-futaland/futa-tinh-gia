@@ -71,9 +71,13 @@ const Pricing = (function(){
     ];
     let running = giaCB, tongCK = 0;
     lines.forEach(l=>{ l.amount = Math.round(running * (l.pct||0)); running -= l.amount; tongCK += l.amount; });
+    // Khuyến mãi giảm giá nội thất — số tiền cố định (VNĐ), nhập tay + nội dung tự do, trừ thẳng vào giá
+    const noiThat = Math.max(0, Math.round(+opts.noiThat||0));
+    const noiThatText = String(opts.noiThatText||'').trim();
+    tongCK += noiThat;
     const giaPhaiTT = Math.max(0, giaNiemYet - tongCK);
-    const hasManual = ((+opts.thanThiet||0)+(+opts.muaSi||0)+(+opts.dacBiet||0)) > 0;   // cần TPKD duyệt
-    return { giaCB, giaNiemYet, lines, tongCK, giaPhaiTT, hasManual };
+    const hasManual = ((+opts.thanThiet||0)+(+opts.muaSi||0)+(+opts.dacBiet||0)) > 0 || noiThat > 0;   // cần TPKD duyệt
+    return { giaCB, giaNiemYet, lines, noiThat, noiThatText, tongCK, giaPhaiTT, hasManual };
   }
 
   return { breakdown, installments, lateInterest, dealCalc, DEFAULT_DOT };
