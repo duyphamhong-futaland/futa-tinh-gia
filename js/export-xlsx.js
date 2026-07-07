@@ -38,7 +38,7 @@ function _buildPhieuSheet(wb,p,method,mck,proj,wmId,dateStr){
   const d=Pricing.dealCalc(p,{nhanh:method.pct||0,thanThiet:mck.thanThiet,muaSi:mck.muaSi,dacBiet:mck.dacBiet});
   const nm=(method.label||'PT').replace(/[\\\/*?:\[\]]/g,'').slice(0,31);
   const ws=wb.addWorksheet(nm,{views:[{showGridLines:false}]});
-  ws.columns=[{width:46},{width:16},{width:12},{width:22},{width:20}];
+  ws.columns=[{width:40},{width:24},{width:10},{width:22},{width:20}];
   const GREEN='FF1B7F3B', LG='FFE2F6E6', GOLD='FFFFF3D6', RED='FFC0392B', money='#,##0', pf='0.00%';
   const bd={top:{style:'thin',color:{argb:'FFD0D7E2'}},left:{style:'thin',color:{argb:'FFD0D7E2'}},bottom:{style:'thin',color:{argb:'FFD0D7E2'}},right:{style:'thin',color:{argb:'FFD0D7E2'}}};
   function C(addr,val,o){ o=o||{}; const c=ws.getCell(addr); c.value=val;
@@ -58,6 +58,15 @@ function _buildPhieuSheet(wb,p,method,mck,proj,wmId,dateStr){
   // Thông tin căn
   ['Mã SP','Tháp/Khu','Tầng','Loại','DT thông thủy (m²)'].forEach((t,i)=>C(String.fromCharCode(65+i)+'3',t,{head:true,bold:true,h:'center'}));
   C('A4',p.ma,{h:'center'});C('B4',p.block||'',{h:'center'});C('C4',p.tang||'',{h:'center'});C('D4',p.loai||'',{h:'center'});C('E4',p.ttuy||0,{h:'center',num:'0.00'});
+  // Hướng căn hộ + View (dòng 5)
+  if(p.huong||p.huongCua||p.view){
+    ws.mergeCells('A5:E5');
+    const hInfo='Hướng ban công: '+(p.huong||'—')+'   ·   Cửa chính: '+(p.huongCua||'—')+(p.view?('   ·   View: '+p.view):'')+(p.viTri?('   ·   '+p.viTri):'');
+    C('A5',hInfo,{size:10,color:'FF425',border:false});
+  }
+  // Gói nội thất tặng (DNTS)
+  const ntVal=(p.duAnId==='P_DNTS'&&typeof POL!=='undefined')?(((POL.rates('residence')||{}).noiThat||{})[String(p.loai||'').toLowerCase().replace(/\s/g,'')]||0):0;
+  if(ntVal){ ws.mergeCells('A15:E15'); C('A15','🎁 Tặng gói nội thất '+ (typeof fmtVN==='function'?fmtVN(ntVal):ntVal) +'đ — hoàn thiện nội thất ≤45 ngày, khấu trừ trực tiếp vào giá bán',{fill:GOLD,size:10,color:'FF8a5a00'}); }
   // Chương trình bán hàng
   C('A6','CHƯƠNG TRÌNH BÁN HÀNG',{head:true,bold:true});C('B6','',{head:true});C('C6','Tỷ lệ',{head:true,bold:true,h:'center'});C('D6','Giá trị (VNĐ)',{head:true,bold:true,h:'right'});C('E6','',{head:true});
   C('A7','(1) Giá niêm yết trước CK (gồm VAT & PBT)',{bold:true});C('D7',d.giaNiemYet,{num:money,h:'right',bold:true});
@@ -78,11 +87,12 @@ function _buildPhieuSheet(wb,p,method,mck,proj,wmId,dateStr){
   const dot=(method.dot||Pricing.DEFAULT_DOT||[]);
   const gcn=dot.find(x=>x.gcn); const gp=gcn?(gcn.tyLe/100):0; const vatF='ROUND(D14/1.12*'+gp+'*0.1,0)';
   ['Đợt thanh toán','Thời gian','Tỷ lệ','Giá trị (VNĐ)','Lũy kế'].forEach((t,i)=>C(String.fromCharCode(65+i)+'19',t,{head:true,bold:true,h:i>=2?'right':'left'}));
-  let r=20; C('A'+r,'Hợp đồng đặt cọc');C('D'+r,100000000,{num:money,h:'right'});C('E'+r,{formula:'D'+r,result:100000000},{num:money,h:'right',color:'FF6B7785'}); let prevE=r; r++;
+  let r=20; C('A'+r,'Hợp đồng đặt cọc');C('B'+r,'Khi ký HĐ đặt cọc',{color:'FF6B7785',wrap:true});C('D'+r,100000000,{num:money,h:'right'});C('E'+r,{formula:'D'+r,result:100000000},{num:money,h:'right',color:'FF6B7785'}); let prevE=r; r++;
   const kpbtR=Math.round(d.giaPhaiTT/1.12*0.02);   // phí bảo trì theo giá sau CK (khớp B17)
   const vGcn=Math.round(d.giaPhaiTT/1.12*gp*0.1);
   dot.forEach(dt=>{
     C('A'+r,dt.ten,{wrap:true});
+    C('B'+r,dt.tg||'',{color:'FF6B7785',wrap:true});
     if(dt.pbt){ F('D'+r,'B17',kpbtR); }
     else {
       C('C'+r,dt.tyLe/100,{num:pf,h:'center'});

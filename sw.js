@@ -1,10 +1,10 @@
 /* FUTA Land — Công cụ tính giá · Service Worker (chạy offline trên điện thoại)
    Cache app shell lần đầu → mở lại KHÔNG cần mạng. Đổi CACHE khi cập nhật file. */
-const CACHE = 'futa-pricing-v6';
+const CACHE = 'futa-pricing-v7';
 const ASSETS = [
-  './', 'index.html', 'css/style.css',
-  'js/config.js', 'js/pricing.js', 'js/policies.js', 'js/data.js',
-  'js/datastore.js', 'js/export-xlsx.js', 'js/manage.js', 'js/app.js',
+  './', 'index.html', 'css/style.css?v=7',
+  'js/config.js?v=7', 'js/pricing.js?v=7', 'js/policies.js?v=7', 'js/data.js?v=7',
+  'js/datastore.js?v=7', 'js/export-xlsx.js?v=7', 'js/manage.js?v=7', 'js/app.js?v=7',
   'vendor/exceljs.min.js',
   'img/logo-futa-land-trans.png', 'img/watermark-futa.png', 'img/favicon.png',
   'img/icon-192.png', 'img/icon-512.png', 'img/apple-touch-icon.png',

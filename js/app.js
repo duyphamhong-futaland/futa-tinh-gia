@@ -11,6 +11,12 @@ function toast(msg,type){ let t=document.getElementById('toast'); if(!t){t=docum
 const State = { unit:null, method:'', manual:{thanThiet:0,muaSi:0,dacBiet:0}, proj:'', block:'', q:'' };
 
 function projName(u){ const p=(window.PRICING_PROJECTS||[]).find(x=>x.id===(u&&u.duAnId)); return p?p.ten:(u&&u.duAnId)||''; }
+/* Gói nội thất tặng (chỉ DNTS): Studio/1PN 100tr · 2PN 200tr — theo loại căn */
+function goiNoiThat(u){
+  if(!u || u.duAnId!=='P_DNTS' || typeof POL==='undefined') return 0;
+  const nt=(POL.rates('residence')||{}).noiThat||{};
+  return nt[String(u.loai||'').toLowerCase().replace(/\s/g,'')]||0;
+}
 function blocksOf(projId){ const s={}; (window.PRICING_UNITS||[]).forEach(u=>{ if(!projId||u.duAnId===projId) if(u.block) s[u.block]=1; }); return Object.keys(s).sort(); }
 
 function unitList(){
@@ -39,7 +45,7 @@ function scheduleRows(u, deal, method){
   const kpbtVal=Math.round(A*0.02);            // phí bảo trì theo giá sau CK
   const vatGcn=Math.round(A*gp*0.1);           // VAT của phần GCN (đợt cuối)
   const base=deal.giaPhaiTT-kpbtVal;           // = giá trị căn hộ gồm VAT
-  const rows=[{ten:'Hợp đồng đặt cọc', tyLe:null, soTien:100000000}];
+  const rows=[{ten:'Hợp đồng đặt cọc', tyLe:null, soTien:100000000, tg:'Khi ký HĐ đặt cọc'}];
   dot.forEach(dt=>{
     let soTien;
     if(dt.pbt){ soTien=kpbtVal; }
@@ -50,7 +56,7 @@ function scheduleRows(u, deal, method){
       if(dt.gcn) soTien-=vatGcn;               // − VAT (đợt cuối không gồm VAT)
       if(dt.coc) soTien-=100000000;            // − đặt cọc
     }
-    rows.push({ten:dt.ten, tyLe:dt.pbt?null:dt.tyLe, soTien});
+    rows.push({ten:dt.ten, tyLe:dt.pbt?null:dt.tyLe, soTien, tg:dt.tg||''});
   });
   let acc=0; rows.forEach(r=>{ acc+=r.soTien; r.luyKe=acc; });
   return rows;
@@ -125,7 +131,11 @@ function renderDetail(){
       <div class="fld"><label>DT thông thủy</label><div class="val">${u.ttuy?(+u.ttuy).toFixed(2)+' m²':'—'}</div></div>
       <div class="fld"><label>DT tim tường</label><div class="val">${u.tim?(+u.tim).toFixed(2)+' m²':'—'}</div></div>
       <div class="fld"><label>Đơn giá</label><div class="val">${u.donGia?fmtVN(u.donGia)+' đ/m²':'—'}</div></div>
+      ${u.huong?`<div class="fld"><label>Hướng ban công</label><div class="val">${esc(u.huong)}</div></div>`:''}
+      ${u.huongCua?`<div class="fld"><label>Hướng cửa chính</label><div class="val">${esc(u.huongCua)}</div></div>`:''}
+      ${u.view?`<div class="fld"><label>View / Vị trí</label><div class="val">${esc(u.view)}${u.viTri?' · '+esc(u.viTri):''}</div></div>`:''}
     </div>
+    ${goiNoiThat(u)?`<div class="noithat-box">🎁 <b>Tặng gói nội thất trị giá ${fmtVN(goiNoiThat(u))}đ</b> — hoàn thiện nội thất trong 45 ngày kể từ ngày bàn giao · ưu đãi khấu trừ trực tiếp vào giá bán</div>`:''}
     <div class="ck-box">
       <div class="ck-title">Phương thức thanh toán</div>
       <select id="methodSel" onchange="setMethod(this.value)">${methods.map(m=>`<option value="${m.key}"${m.key===State.method?' selected':''}>${esc(m.label)}${m.pct?(' — CK '+pct(m.pct)):''}</option>`).join('')}</select>
@@ -158,8 +168,8 @@ function renderDetailNumbers(){
     </div>
     <div class="sched">
       <div class="sched-h">Tiến độ thanh toán — <b>${esc(method.label)}</b></div>
-      <table><thead><tr><th>Đợt</th><th class="r">Tỷ lệ</th><th class="r">Số tiền (đ)</th><th class="r">Luỹ kế</th></tr></thead>
-      <tbody>${rows.map(r=>`<tr><td>${esc(r.ten)}</td><td class="r">${r.tyLe!=null?r.tyLe+'%':''}</td><td class="r">${fmtVN(r.soTien)}</td><td class="r muted">${fmtVN(r.luyKe)}</td></tr>`).join('')}</tbody></table>
+      <table><thead><tr><th>Đợt</th><th>Thời gian</th><th class="r">Tỷ lệ</th><th class="r">Số tiền (đ)</th><th class="r">Luỹ kế</th></tr></thead>
+      <tbody>${rows.map(r=>`<tr><td>${esc(r.ten)}</td><td style="color:#5b6573">${esc(r.tg||'')}</td><td class="r">${r.tyLe!=null?r.tyLe+'%':''}</td><td class="r">${fmtVN(r.soTien)}</td><td class="r muted">${fmtVN(r.luyKe)}</td></tr>`).join('')}</tbody></table>
     </div>
     <div class="note">Phiếu tạm tính — ngày ${todayVN()}. Giá trị cuối theo hợp đồng chính thức.</div>`;
 }
