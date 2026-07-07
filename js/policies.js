@@ -81,7 +81,8 @@ const POL = (function () {
           {ten:'Đợt 1 (Ký HĐMB)',tyLe:20,coc:true},{ten:'Đợt 2 (Ngân hàng)',tyLe:50},{ten:'Đợt 3 (KH — Phí bảo trì)',pbt:true},
           {ten:'Đợt 3 (Ngân hàng)',tyLe:25,vatGcn:true},{ten:'Đợt 4 (Ngân hàng — Cấp GCN)',tyLe:5,gcn:true} ] },
         { key: 'nhanh95', label: 'Nhanh 95%', pct: 0.10, dot: [
-          {ten:'Đợt 1 (Ký HĐMB)',tyLe:30,coc:true},{ten:'Đợt 2',tyLe:40},{ten:'Đợt 3',tyLe:25,vatGcn:true},{ten:'Đợt 4 (Cấp GCN)',tyLe:5,gcn:true} ] },
+          {ten:'Đợt 1 (Ký HĐMB — trong 7 ngày)',tyLe:95,coc:true,kpbt:true,vatGcn:true},
+          {ten:'Đợt 2 (Nhận GCN QSH)',tyLe:5,gcn:true} ] },
       ],
       muaSi: [{ min: 3, pct: 0.04 }, { min: 2, pct: 0.02 }], thanThiet: 0.01, ngoaiGiao: 0.10, htls: '12 tháng',
     },

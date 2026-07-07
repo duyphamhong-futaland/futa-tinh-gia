@@ -34,14 +34,22 @@ function currentDeal(){
 /* Lịch thanh toán theo phương thức (cùng logic xuất Excel) */
 function scheduleRows(u, deal, method){
   const dot=(method.dot||Pricing.DEFAULT_DOT||[]);
-  const gcn=dot.find(x=>x.gcn); const gp=gcn?(gcn.tyLe/100):0; const vatGcn=Math.round(deal.giaPhaiTT/1.12*gp*0.1);
-  const base=deal.giaPhaiTT-(u.kpbt||0);
+  const gcn=dot.find(x=>x.gcn); const gp=gcn?(gcn.tyLe/100):0;
+  const A=deal.giaPhaiTT/1.12;                 // giá bán chưa VAT (sau CK)
+  const kpbtVal=Math.round(A*0.02);            // phí bảo trì theo giá sau CK
+  const vatGcn=Math.round(A*gp*0.1);           // VAT của phần GCN (đợt cuối)
+  const base=deal.giaPhaiTT-kpbtVal;           // = giá trị căn hộ gồm VAT
   const rows=[{ten:'Hợp đồng đặt cọc', tyLe:null, soTien:100000000}];
   dot.forEach(dt=>{
     let soTien;
-    if(dt.pbt){ soTien=u.kpbt||0; }
-    else { const b=Math.round(base*dt.tyLe/100);
-      if(dt.coc) soTien=b-100000000; else if(dt.vatGcn) soTien=b+vatGcn; else if(dt.gcn) soTien=b-vatGcn; else soTien=b; }
+    if(dt.pbt){ soTien=kpbtVal; }
+    else {
+      soTien=Math.round(base*dt.tyLe/100);     // % trên giá trị căn hộ gồm VAT
+      if(dt.kpbt) soTien+=kpbtVal;             // + phí bảo trì
+      if(dt.vatGcn) soTien+=vatGcn;            // + VAT của 5% cuối
+      if(dt.gcn) soTien-=vatGcn;               // − VAT (đợt cuối không gồm VAT)
+      if(dt.coc) soTien-=100000000;            // − đặt cọc
+    }
     rows.push({ten:dt.ten, tyLe:dt.pbt?null:dt.tyLe, soTien});
   });
   let acc=0; rows.forEach(r=>{ acc+=r.soTien; r.luyKe=acc; });

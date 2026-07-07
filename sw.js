@@ -1,6 +1,6 @@
 /* FUTA Land — Công cụ tính giá · Service Worker (chạy offline trên điện thoại)
    Cache app shell lần đầu → mở lại KHÔNG cần mạng. Đổi CACHE khi cập nhật file. */
-const CACHE = 'futa-pricing-v5';
+const CACHE = 'futa-pricing-v6';
 const ASSETS = [
   './', 'index.html', 'css/style.css',
   'js/config.js', 'js/pricing.js', 'js/policies.js', 'js/data.js',

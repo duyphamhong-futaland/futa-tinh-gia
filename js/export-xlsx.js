@@ -79,14 +79,19 @@ function _buildPhieuSheet(wb,p,method,mck,proj,wmId,dateStr){
   const gcn=dot.find(x=>x.gcn); const gp=gcn?(gcn.tyLe/100):0; const vatF='ROUND(D14/1.12*'+gp+'*0.1,0)';
   ['Đợt thanh toán','Thời gian','Tỷ lệ','Giá trị (VNĐ)','Lũy kế'].forEach((t,i)=>C(String.fromCharCode(65+i)+'19',t,{head:true,bold:true,h:i>=2?'right':'left'}));
   let r=20; C('A'+r,'Hợp đồng đặt cọc');C('D'+r,100000000,{num:money,h:'right'});C('E'+r,{formula:'D'+r,result:100000000},{num:money,h:'right',color:'FF6B7785'}); let prevE=r; r++;
+  const kpbtR=Math.round(d.giaPhaiTT/1.12*0.02);   // phí bảo trì theo giá sau CK (khớp B17)
+  const vGcn=Math.round(d.giaPhaiTT/1.12*gp*0.1);
   dot.forEach(dt=>{
     C('A'+r,dt.ten,{wrap:true});
-    if(dt.pbt){ F('D'+r,'B17',p.kpbt||0); }
-    else { C('C'+r,dt.tyLe/100,{num:pf,h:'center'}); const bF='ROUND((D14-B17)*C'+r+',0)', bV=Math.round((d.giaPhaiTT-(p.kpbt||0))*dt.tyLe/100);
-      if(dt.coc) F('D'+r,bF+'-100000000',bV-100000000);
-      else if(dt.vatGcn) F('D'+r,bF+'+'+vatF,bV+Math.round(d.giaPhaiTT/1.12*gp*0.1));
-      else if(dt.gcn) F('D'+r,bF+'-'+vatF,bV-Math.round(d.giaPhaiTT/1.12*gp*0.1));
-      else F('D'+r,bF,bV);
+    if(dt.pbt){ F('D'+r,'B17',kpbtR); }
+    else {
+      C('C'+r,dt.tyLe/100,{num:pf,h:'center'});
+      let bF='ROUND((D14-B17)*C'+r+',0)', bV=Math.round((d.giaPhaiTT-kpbtR)*dt.tyLe/100), fx='', vx=0;
+      if(dt.kpbt){ fx+='+B17'; vx+=kpbtR; }
+      if(dt.vatGcn){ fx+='+'+vatF; vx+=vGcn; }
+      if(dt.gcn){ fx+='-'+vatF; vx-=vGcn; }
+      if(dt.coc){ fx+='-100000000'; vx-=100000000; }
+      F('D'+r, bF+fx, bV+vx);
     }
     C('E'+r,{formula:'E'+prevE+'+D'+r,result:0},{num:money,h:'right',color:'FF6B7785'}); prevE=r; r++;
   });
