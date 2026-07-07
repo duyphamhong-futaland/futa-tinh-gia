@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FUTA Land — Công cụ tính giá</title>
+<link rel="icon" href="img/favicon.png">
+<link rel="stylesheet" href="css/style.css">
+<!-- PWA (cài lên điện thoại: Thêm vào màn hình chính) -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#1B7F3B">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Tính giá FUTA">
+<link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><img src="img/logo-futa-land-trans.png" alt="FUTA Land"><div><b>FUTA Land</b><small>Công cụ tính giá tạm tính</small></div></div>
+  <div class="meta">
+    <span>📦 <b id="unitCount">0</b> căn</span>
+    <span>🗓 Dữ liệu cập nhật: <b id="snapDate">—</b></span>
+    <button class="hdr-btn" onclick="Manage.open()">⚙ Quản lý dữ liệu</button>
+  </div>
+</header>
+
+<main>
+  <!-- Trái: chọn căn -->
+  <section class="panel left">
+    <div id="projTabs" class="proj-tabs"></div>
+    <div class="filter">
+      <input id="search" type="search" placeholder="🔍 Tìm mã căn / loại (VD: CT7-08.09)" oninput="onSearch(this.value)">
+    </div>
+    <div id="blockChips" class="chips"></div>
+    <div class="list-wrap">
+      <table class="unit-table">
+        <thead><tr><th>Mã căn</th><th>Tháp/Khu</th><th>Loại</th><th class="r">DT (m²)</th><th class="r">Giá bán (đ)</th></tr></thead>
+        <tbody id="unitRows"></tbody>
+      </table>
+    </div>
+    <div class="list-foot"><span id="listCount">0</span> căn · <span id="listMore"></span></div>
+  </section>
+
+  <!-- Phải: tính giá -->
+  <section class="panel right" id="detail">
+    <div class="empty-detail">👈 Chọn một căn ở danh sách để tính giá</div>
+  </section>
+</main>
+
+<footer class="foot">FUTA Land · Công cụ tính giá tạm tính · chạy độc lập, không cần internet. Giá trị chính thức theo hợp đồng.</footer>
+
+<script src="js/config.js"></script>
+<script src="js/pricing.js"></script>
+<script src="js/policies.js"></script>
+<script src="js/data.js"></script>
+<script src="js/datastore.js"></script>
+<script src="js/export-xlsx.js"></script>
+<script src="js/manage.js"></script>
+<script src="js/app.js"></script>
+<script>
+  /* Đăng ký service worker để chạy offline trên điện thoại (chỉ khi mở qua http/https, không phải app desktop) */
+  if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0) {
+    window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(()=>{}));
+  }
+</script>
+</body>
+</html>

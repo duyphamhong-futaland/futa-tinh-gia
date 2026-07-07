@@ -1,0 +1,16 @@
+{
+  "name": "FUTA Land — Tính giá",
+  "short_name": "Tính giá FUTA",
+  "description": "Công cụ tính giá tạm tính FUTA Land — chọn căn, chiết khấu, xuất phiếu.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f4f6f9",
+  "theme_color": "#1B7F3B",
+  "lang": "vi",
+  "icons": [
+    { "src": "img/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "img/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
