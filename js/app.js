@@ -105,7 +105,7 @@ function renderDetail(){
   if(!u){ document.body.classList.remove('show-detail'); wrap.innerHTML=`<div class="empty-detail">👈 Chọn một căn ở danh sách để tính giá</div>`; return; }
   const {methods}=currentDeal();
   wrap.innerHTML=`
-    <button class="d-back" onclick="backToList()">← Danh sách căn</button>
+    <button class="d-back" onclick="backToList()">✕ Đóng bảng tính</button>
     <div class="d-head">
       <div><div class="d-ma">${esc(u.ma)}</div><div class="d-sub">${esc(projName(u))} · ${esc(u.block||'')}${u.tang?(' · Tầng '+esc(u.tang)):''}${u.loai?(' · '+esc(u.loai)):''}</div></div>
       <div class="d-acts">

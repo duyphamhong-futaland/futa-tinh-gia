@@ -107,21 +107,28 @@ main{flex:1;display:grid;grid-template-columns:minmax(420px,1fr) minmax(440px,1.
 .m-tbl .code{font-family:ui-monospace,Menlo,monospace;font-size:12px}
 .m-tbl .empty{text-align:center;color:var(--muted);padding:22px}
 
-/* Nút quay lại (chỉ hiện trên mobile) */
-.d-back{display:none;align-items:center;gap:6px;background:#eef2f7;border:1px solid var(--line);border-radius:8px;padding:8px 14px;font-size:14px;font-weight:600;color:#334;cursor:pointer;margin-bottom:12px}
+/* Nút đóng popup (chỉ hiện trên mobile) */
+.d-back{display:none;align-items:center;gap:6px;background:#eef2f7;border:1px solid var(--line);border-radius:8px;padding:9px 16px;font-size:14px;font-weight:700;color:#334;cursor:pointer;margin-bottom:12px}
+#sheetBackdrop{display:none}
+@keyframes sheetUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
 
 @media(max-width:900px){
   main{grid-template-columns:1fr;gap:0;padding:12px}
   .d-grid,.ck-inputs,.m-grid{grid-template-columns:1fr 1fr}
-  /* Master–detail: mặc định xem DANH SÁCH; chọn căn → xem phần TÍNH GIÁ full màn hình */
   .panel.right{display:none}
-  body.show-detail .panel.left{display:none}
-  body.show-detail .panel.right{display:block}
+  /* POPUP bottom-sheet: chọn căn → cửa sổ trượt lên đè trên danh sách (nền mờ) */
+  body.show-detail #sheetBackdrop{display:block;position:fixed;inset:0;background:rgba(15,25,40,.5);z-index:59}
+  body.show-detail .panel.right{
+    display:block;position:fixed;left:0;right:0;bottom:0;top:6vh;z-index:60;margin:0;
+    border-radius:18px 18px 0 0;overflow:auto;-webkit-overflow-scrolling:touch;
+    box-shadow:0 -10px 40px rgba(0,0,0,.35);animation:sheetUp .22s cubic-bezier(.2,.8,.2,1);padding-top:6px
+  }
+  body.show-detail .panel.right::before{content:'';display:block;width:44px;height:5px;border-radius:3px;background:#d3d9e2;margin:2px auto 10px}
   .d-back{display:inline-flex}
-  /* tối ưu thao tác chạm */
-  .d-head{position:sticky;top:0;background:#fff;z-index:2;padding-top:2px;margin:-2px 0 12px}
+  /* thanh mã căn + nút In/Xuất dính trên đầu popup để luôn với tới */
+  body.show-detail .d-head{position:sticky;top:0;background:#fff;z-index:2;padding:6px 0 10px;margin:0 0 12px;border-bottom:1px solid var(--line)}
   .d-acts{width:100%} .d-acts .btn{flex:1;padding:11px}
-  .unit-table td{padding:11px 10px}   /* dòng cao hơn cho dễ chạm */
+  .unit-table td{padding:12px 10px}   /* dòng cao hơn cho dễ chạm */
   .list-wrap{max-height:none}
   .ck-inputs input{padding:11px}
   .final b{font-size:22px}
