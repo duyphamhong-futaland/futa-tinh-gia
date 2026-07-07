@@ -1,7 +1,7 @@
 /* ============================================================
    FUTA Land Estella · policies.js
    Registry CHÍNH SÁCH BÁN HÀNG THẬT (đối chứng file Excel "Tổng hợp
-   chính sách … đang triển khai", cập nhật 22/06/2026). Nguồn sự thật
+   chính sách … đang triển khai", cập nhật 03/07/2026). Nguồn sự thật
    trong app cho 3 dự án đang triển khai: FUTA Residence (CT3&7),
    FUTA Kim Phát (C5B), FUTA Kim An (H&A).
 
@@ -12,7 +12,7 @@
 window.SCREENS = window.SCREENS || {};
 
 const POL = (function () {
-  const UPDATED = '22/06/2026';
+  const UPDATED = '03/07/2026';
 
   const PROJECTS = [
     {
@@ -26,6 +26,8 @@ const POL = (function () {
           'Sale: Studio/1PN/2PN & Shophouse 20tr · Penthouse 100tr · 2PN Ocean Panorama (mã 03,04) 300tr. Đại lý: Studio/1PN/2PN 10tr'],
         ['CSTN/FUTA Residence/ĐL/04.2026', '15/04/2026', 'Thưởng nóng Sale & Đại lý (cập nhật)',
           'Sale: Studio/1PN/2PN 40tr/giao dịch. Đại lý: 10tr/giao dịch'],
+        ['CS Hỗ trợ Marketing/ĐL/07.2026', '01/07/2026', 'Hỗ trợ chi phí Marketing cho Đại lý',
+          '10.000.000 đồng/giao dịch (từ 01/07/2026)'],
       ],
       expired: [
         ['CSBH 02/ĐN Times square/KH/11.2025', '01/11/2025', 'CK 10% đặc biệt (36 căn) — trước thuế & phí bảo trì'],
@@ -36,10 +38,10 @@ const POL = (function () {
     {
       key: 'c5b', name: 'FUTA Kim Phát (C5B)',
       active: [
+        ['CSBH 03/FUTA KIMPHAT/KH/07.2026', '01/07/2026', 'Chính sách hiện hành T7: mua sỉ, thân thiết, đặc quyền T7, nhanh, HTLS',
+          'Mua sỉ 2 căn 1% / từ 3 căn 2%; KH thân thiết 1%; ĐẶC QUYỀN THÁNG 07: CK 5% (mua 01–30/07/2026); HTLS 12 tháng; Thanh toán Nhanh 50% → CK 6% / Nhanh 70% → CK 10%'],
         ['CSBH 03/FUTA KIMPHAT/KH/06.2026', '18/06/2026', 'PTTT chuẩn (không vay NH) + Thanh toán nhanh',
           'Chuẩn: CK 3% trước VAT (TT 30% GTHĐ gồm VAT, đúng tiến độ đợt 1). Nhanh: CK 6% trước VAT (TT 50% GTHĐ đợt 1)'],
-        ['CSBH 02/FUTA KIMPHAT/KH/03.2026', '25/03/2026', 'Mua sỉ · thân thiết · địa phương · nhanh · HTLS',
-          'Mua sỉ 2 căn 1% / từ 3 căn 2%; KH thân thiết 1%; địa phương (Đà Nẵng) 1%; Thanh toán Nhanh 70% → CK 10%; HTLS 12 tháng'],
         ['CSTN 01/FUTA KIMPHAT/ĐL/06.2026', '18/06/2026', 'Thưởng nóng Sale & Đại lý',
           'Townhouse & Shophouse — Sale 40tr/giao dịch · Đại lý 10tr/giao dịch'],
         ['CSBS 02/FUTA KIMPHAT/KH/06.2026', '16/06/2026', 'Tri ân "KH giới thiệu KH"',
@@ -66,8 +68,9 @@ const POL = (function () {
     },
   ];
 
-  /* Bảng % chính sách "máy đọc được" (đối chứng file 22/06/2026) — công thức giá ăn theo đây.
-     methods = phương thức thanh toán (CK trên giá trước VAT). muaSi = chiết khấu theo số căn. */
+  /* Bảng % chính sách "máy đọc được" (đối chứng file 03/07/2026) — công thức giá ăn theo đây.
+     methods = phương thức thanh toán (CK trên giá trước VAT). muaSi = chiết khấu theo số căn.
+     Kim Phát 07/2026: thêm "đặc quyền Tháng 07" CK 5% (mua trong 01–30/07/2026) — nhập ở ô "đặc biệt". */
   const RATES = {
     residence: {
       methods: [
@@ -80,18 +83,18 @@ const POL = (function () {
         { key: 'nhanh95', label: 'Nhanh 95%', pct: 0.10, dot: [
           {ten:'Đợt 1 (Ký HĐMB)',tyLe:30,coc:true},{ten:'Đợt 2',tyLe:40},{ten:'Đợt 3',tyLe:25,vatGcn:true},{ten:'Đợt 4 (Cấp GCN)',tyLe:5,gcn:true} ] },
       ],
-      muaSi: [{ min: 3, pct: 0.04 }, { min: 2, pct: 0.02 }], thanThiet: 0.01, htls: '12 tháng',
+      muaSi: [{ min: 3, pct: 0.04 }, { min: 2, pct: 0.02 }], thanThiet: 0.01, ngoaiGiao: 0.10, htls: '12 tháng',
     },
     c5b: {
-      methods: [{ key: 'chuan', label: 'PTTT chuẩn (không vay)', pct: 0.03 }, { key: 'nhanh', label: 'Thanh toán nhanh', pct: 0.06 },
+      methods: [{ key: 'chuan', label: 'PTTT chuẩn — TT 30%', pct: 0.03 }, { key: 'nhanh', label: 'Nhanh 50% — TT 50%', pct: 0.06 },
                 { key: 'nhanh70', label: 'Nhanh 70%', pct: 0.10 }, { key: 'vay', label: 'Khách vay NH', pct: 0 }],
-      muaSi: [{ min: 3, pct: 0.02 }, { min: 2, pct: 0.01 }], thanThiet: 0.01, diaPhuong: 0.01, ngoaiGiao: 0.05, htls: '12 tháng',
+      muaSi: [{ min: 3, pct: 0.02 }, { min: 2, pct: 0.01 }], thanThiet: 0.01, dacQuyenT7: 0.05, htls: '12 tháng',
     },
     kiman: {
       methods: [{ key: 'thuong', label: 'Tiêu chuẩn', pct: 0 }, { key: 'nhanh50', label: 'Nhanh 50%', pct: 0.05 },
                 { key: 'nhanh70', label: 'Nhanh 70%', pct: 0.07 }, { key: 'nhanh95', label: 'Nhanh 95%', pct: 0.09 }],
-      muaSi: [{ min: 10, pct: 0.05 }, { min: 5, pct: 0.05 }, { min: 3, pct: 0.02 }, { min: 2, pct: 0.01 }],
-      thanThiet: 0.01, ngoaiGiao: 0.05, htls: '12 tháng',
+      muaSi: [{ min: 10, pct: 0.10 }, { min: 5, pct: 0.05 }, { min: 3, pct: 0.02 }, { min: 2, pct: 0.01 }],
+      thanThiet: 0.01, earlyBird: 0.01, dacBiet: 0.01, noiBo: 0.02, ngoaiGiao: 0.05, htls: '12 tháng',
     },
   };
 
@@ -117,8 +120,8 @@ const POL = (function () {
   /* CK theo phương thức cho C5B — phục vụ auto-điền HĐMB (giữ tương thích) */
   function c5bDiscount(method) {
     switch (method) {
-      case 'chuan': return { pct: 0.03, label: 'PTTT chuẩn (không vay)', note: 'CK 3% trước VAT · TT 30% GTHĐ (gồm VAT) đúng tiến độ đợt 1' };
-      case 'nhanh': return { pct: 0.06, label: 'Thanh toán nhanh', note: 'CK 6% trước VAT · TT 50% GTHĐ đợt 1 (hoặc Nhanh 70% → CK 10%)' };
+      case 'chuan': return { pct: 0.03, label: 'PTTT chuẩn — TT 30%', note: 'CK 3% trước VAT · TT 30% GTHĐ (gồm VAT) đúng tiến độ đợt 1' };
+      case 'nhanh': return { pct: 0.06, label: 'Nhanh 50% — TT 50%', note: 'CK 6% trước VAT · TT 50% GTHĐ đợt 1 (hoặc Nhanh 70% → CK 10%)' };
       case 'vay': return { pct: 0, label: 'Khách vay ngân hàng', note: 'Không chiết khấu (CK 5% đã HẾT HIỆU LỰC 04.2026) · HTLS 12 tháng' };
       default: return { pct: 0, label: '', note: '' };
     }
