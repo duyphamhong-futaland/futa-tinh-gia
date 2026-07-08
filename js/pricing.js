@@ -71,13 +71,15 @@ const Pricing = (function(){
     ];
     let running = giaCB, tongCK = 0;
     lines.forEach(l=>{ l.amount = Math.round(running * (l.pct||0)); running -= l.amount; tongCK += l.amount; });
-    // Khuyến mãi giảm giá nội thất — số tiền cố định (VNĐ), nhập tay + nội dung tự do, trừ thẳng vào giá
-    const noiThat = Math.max(0, Math.round(+opts.noiThat||0));
-    const noiThatText = String(opts.noiThatText||'').trim();
-    tongCK += noiThat;
+    // Tùy chọn chiết khấu thêm — NHIỀU dòng, mỗi dòng số tiền cố định (VNĐ) + nội dung tự nhập, trừ thẳng vào giá
+    const custom = (opts.custom||[])
+      .map(c=>({ text:String(c&&c.text||'').trim(), amount:Math.max(0, Math.round(+(c&&c.amount)||0)) }))
+      .filter(c=>c.amount>0);
+    const customTong = custom.reduce((s,c)=>s+c.amount, 0);
+    tongCK += customTong;
     const giaPhaiTT = Math.max(0, giaNiemYet - tongCK);
-    const hasManual = ((+opts.thanThiet||0)+(+opts.muaSi||0)+(+opts.dacBiet||0)) > 0 || noiThat > 0;   // cần TPKD duyệt
-    return { giaCB, giaNiemYet, lines, noiThat, noiThatText, tongCK, giaPhaiTT, hasManual };
+    const hasManual = ((+opts.thanThiet||0)+(+opts.muaSi||0)+(+opts.dacBiet||0)) > 0 || customTong > 0;   // cần TPKD duyệt
+    return { giaCB, giaNiemYet, lines, custom, customTong, tongCK, giaPhaiTT, hasManual };
   }
 
   return { breakdown, installments, lateInterest, dealCalc, DEFAULT_DOT };

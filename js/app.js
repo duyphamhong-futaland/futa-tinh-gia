@@ -8,7 +8,7 @@ function pct(v){ return (+((+v||0)*100).toFixed(2))+'%'; }
 function toast(msg,type){ let t=document.getElementById('toast'); if(!t){t=document.createElement('div');t.id='toast';document.body.appendChild(t);}
   t.textContent=msg; t.className='show '+(type||''); clearTimeout(window._tt); window._tt=setTimeout(()=>t.className='',2600); }
 
-const State = { unit:null, method:'', manual:{thanThiet:0,muaSi:0,dacBiet:0,noiThat:0}, noiThatText:'', giaOverride:null, proj:'', block:'', q:'' };
+const State = { unit:null, method:'', manual:{thanThiet:0,muaSi:0,dacBiet:0}, custom:[], giaOverride:null, proj:'', block:'', q:'' };
 
 /* Đọc số nguyên từ chuỗi nhập tay (bỏ mọi ký tự không phải số). '' → null */
 function parseIntVN(s){ if(s==null) return null; const d=String(s).replace(/[^\d]/g,''); return d===''?null:parseInt(d,10); }
@@ -23,12 +23,6 @@ function effUnit(){
 }
 
 function projName(u){ const p=(window.PRICING_PROJECTS||[]).find(x=>x.id===(u&&u.duAnId)); return p?p.ten:(u&&u.duAnId)||''; }
-/* Gói nội thất tặng (chỉ DNTS): Studio/1PN 100tr · 2PN 200tr — theo loại căn */
-function goiNoiThat(u){
-  if(!u || u.duAnId!=='P_DNTS' || typeof POL==='undefined') return 0;
-  const nt=(POL.rates('residence')||{}).noiThat||{};
-  return nt[String(u.loai||'').toLowerCase().replace(/\s/g,'')]||0;
-}
 function blocksOf(projId){ const s={}; (window.PRICING_UNITS||[]).forEach(u=>{ if(!projId||u.duAnId===projId) if(u.block) s[u.block]=1; }); return Object.keys(s).sort(); }
 
 function unitList(){
@@ -46,7 +40,7 @@ function methodsOf(u){ const pol=polOf(u); return pol?POL.methods(pol.key):[{key
 function currentDeal(){
   const ms=methodsOf(State.unit);
   const method=ms.find(m=>m.key===State.method)||ms[0]||{key:'',label:'',pct:0};
-  const deal=Pricing.dealCalc(effUnit(),{nhanh:method.pct||0, thanThiet:State.manual.thanThiet, muaSi:State.manual.muaSi, dacBiet:State.manual.dacBiet, noiThat:State.manual.noiThat, noiThatText:State.noiThatText});
+  const deal=Pricing.dealCalc(effUnit(),{nhanh:method.pct||0, thanThiet:State.manual.thanThiet, muaSi:State.manual.muaSi, dacBiet:State.manual.dacBiet, custom:State.custom});
   return {deal, method, methods:ms};
 }
 /* Lịch thanh toán theo phương thức (cùng logic xuất Excel) */
@@ -118,7 +112,7 @@ function selectUnit(ma){
   State.unit=(window.PRICING_UNITS||[]).find(u=>u.ma===ma); if(!State.unit) return;
   const ms=methodsOf(State.unit); State.method=(ms[0]||{}).key||'';
   State.giaOverride=null;                              // dùng lại giá gốc của căn vừa chọn
-  State.noiThatText=''; State.manual.noiThat=0;        // khuyến mãi nội thất là tuỳ chọn — reset theo từng căn
+  State.custom=[{text:'',amount:0}];                   // tùy chọn chiết khấu thêm — reset về 1 dòng trống theo từng căn
   renderList(); renderDetail();
   // Mobile: mở phần tính giá full màn hình (khỏi cuộn qua danh sách dài)
   if(window.innerWidth<=900){ document.body.classList.add('show-detail'); window.scrollTo(0,0); }
@@ -129,14 +123,12 @@ function setCK(kind,v){ State.manual[kind]=Math.max(0,(+v||0))/100; renderDetail
 /* Giá niêm yết tự nhập — bỏ trống thì quay về giá gốc của căn */
 function setGia(v){ const n=parseIntVN(v); State.giaOverride=(n==null)?null:Math.max(0,n); renderDetailNumbers(); }
 function onGiaBlur(el){ el.value=fmtVN(State.giaOverride!=null?State.giaOverride:giaDefaultOf(State.unit)); }
-/* Khuyến mãi giảm giá nội thất — nội dung tự do + số tiền tự nhập */
-function setNoiThatText(v){ State.noiThatText=v; renderDetailNumbers(); }
-function setNoiThatAmt(v){ State.manual.noiThat=Math.max(0,parseIntVN(v)||0); renderDetailNumbers(); }
-function onNoiThatBlur(el){ el.value=State.manual.noiThat?fmtVN(State.manual.noiThat):''; }
-/* Điền nhanh gợi ý gói nội thất theo chính sách (chỉ DNTS) */
-function fillNoiThatSuggest(){ const amt=goiNoiThat(State.unit); if(!amt) return;
-  State.noiThatText='Tặng gói nội thất (hoàn thiện nội thất trong 45 ngày kể từ bàn giao)';
-  State.manual.noiThat=amt; renderDetail(); }
+/* Tùy chọn chiết khấu thêm — NHIỀU dòng, mỗi dòng nội dung tự nhập + số tiền tự nhập (áp cho mọi dự án) */
+function addCustomRow(){ State.custom.push({text:'',amount:0}); renderDetail(); }
+function removeCustomRow(i){ State.custom.splice(i,1); if(!State.custom.length) State.custom.push({text:'',amount:0}); renderDetail(); }
+function setCustomText(i,v){ if(State.custom[i]) State.custom[i].text=v; renderDetailNumbers(); }
+function setCustomAmt(i,v){ if(State.custom[i]) State.custom[i].amount=Math.max(0,parseIntVN(v)||0); renderDetailNumbers(); }
+function onCustomAmtBlur(el,i){ const a=State.custom[i]&&State.custom[i].amount; el.value=a?fmtVN(a):''; }
 
 function renderDetail(){
   const wrap=document.getElementById('detail');
@@ -166,17 +158,21 @@ function renderDetail(){
       <div class="gia-hint">Để trống → dùng lại giá gốc của căn (${fmtVN(giaDefaultOf(u))}đ). Mọi chiết khấu &amp; tiến độ tính theo giá này.</div>
       <div class="ck-title" style="margin-top:12px">Phương thức thanh toán</div>
       <select id="methodSel" onchange="setMethod(this.value)">${methods.map(m=>`<option value="${m.key}"${m.key===State.method?' selected':''}>${esc(m.label)}${m.pct?(' — CK '+pct(m.pct)):''}</option>`).join('')}</select>
-      <div class="ck-title" style="margin-top:12px">Chiết khấu thêm (tuỳ chọn)</div>
+      <div class="ck-title" style="margin-top:12px">Chiết khấu theo % (tuỳ chọn)</div>
       <div class="ck-inputs">
         <label>Thân thiết <span>%</span><input type="number" min="0" step="0.5" value="${State.manual.thanThiet*100||''}" oninput="setCK('thanThiet',this.value)"></label>
         <label>Mua sỉ <span>%</span><input type="number" min="0" step="0.5" value="${State.manual.muaSi*100||''}" oninput="setCK('muaSi',this.value)"></label>
         <label>Đặc biệt <span>%</span><input type="number" min="0" step="0.5" value="${State.manual.dacBiet*100||''}" oninput="setCK('dacBiet',this.value)"></label>
       </div>
-      <div class="ck-title" style="margin-top:12px">Khuyến mãi giảm giá nội thất (tuỳ chọn)${goiNoiThat(u)?` <button type="button" class="nt-suggest" onclick="fillNoiThatSuggest()">Gợi ý: ${fmtVN(goiNoiThat(u))}đ</button>`:''}</div>
-      <div class="nt-inputs">
-        <input type="text" id="ntText" placeholder="Nội dung (VD: Tặng gói nội thất cao cấp)" value="${esc(State.noiThatText)}" oninput="setNoiThatText(this.value)">
-        <label>Số tiền <span>đ</span><input type="text" inputmode="numeric" value="${State.manual.noiThat?fmtVN(State.manual.noiThat):''}" oninput="setNoiThatAmt(this.value)" onblur="onNoiThatBlur(this)"></label>
+      <div class="ck-title" style="margin-top:12px">Tùy chọn chiết khấu thêm — số tiền (có thể thêm nhiều dòng)</div>
+      <div class="cx-list">
+        ${State.custom.map((c,i)=>`<div class="cx-row">
+          <input type="text" placeholder="Nội dung (tự nhập, VD: Ưu đãi nội thất, CK khác…)" value="${esc(c.text)}" oninput="setCustomText(${i},this.value)">
+          <input type="text" inputmode="numeric" placeholder="Số tiền (đ)" value="${c.amount?fmtVN(c.amount):''}" oninput="setCustomAmt(${i},this.value)" onblur="onCustomAmtBlur(this,${i})">
+          <button type="button" class="cx-del" title="Xóa dòng" onclick="removeCustomRow(${i})">✕</button>
+        </div>`).join('')}
       </div>
+      <button type="button" class="cx-add" onclick="addCustomRow()">+ Thêm dòng chiết khấu</button>
     </div>
     <div id="detailNumbers"></div>`;
   renderDetailNumbers();
@@ -190,7 +186,7 @@ function renderDetailNumbers(){
   if(deal.lines[1].amount) ckHtml+=line('Chiết khấu mua sỉ',deal.lines[1].amount,State.manual.muaSi);
   if(deal.lines[2].amount) ckHtml+=line('Chiết khấu đặc biệt',deal.lines[2].amount,State.manual.dacBiet);
   if(deal.lines[3].amount) ckHtml+=line('Thanh toán nhanh',deal.lines[3].amount,method.pct);
-  if(deal.noiThat) ckHtml+=line('🛋 '+(deal.noiThatText||'Khuyến mãi giảm giá nội thất'),deal.noiThat,0);
+  (deal.custom||[]).forEach(c=>{ ckHtml+=line(esc(c.text||'Chiết khấu thêm'),c.amount,0); });
   const rows=scheduleRows(State.unit,deal,method);
   document.getElementById('detailNumbers').innerHTML=`
     <div class="pr-card">
@@ -208,7 +204,7 @@ function renderDetailNumbers(){
 }
 
 function doExport(){ if(!State.unit){toast('Chọn căn trước','err');return;}
-  exportPhieuXLSX(effUnit(), Object.assign({}, State.manual, {noiThatText:State.noiThatText}), projName(State.unit)); }
+  exportPhieuXLSX(effUnit(), Object.assign({}, State.manual, {custom:State.custom}), projName(State.unit)); }
 
 /* ---- In phiếu A4 (đậm + tô màu chiết khấu để khách thấy lợi ích) ---- */
 function printPhieu(){
@@ -254,7 +250,7 @@ function printPhieu(){
     ${ckLine('Chiết khấu mua sỉ',deal.lines[1].amount)}
     ${ckLine('Chiết khấu đặc biệt / khác',deal.lines[2].amount)}
     ${ckLine('Chiết khấu thanh toán nhanh',deal.lines[3].amount)}
-    ${ckLine(esc(deal.noiThatText||'Khuyến mãi giảm giá nội thất'),deal.noiThat)}
+    ${(deal.custom||[]).map(c=>ckLine(esc(c.text||'Chiết khấu thêm'),c.amount)).join('')}
   </table>
   <div class="benefit"><span>🎁 TỔNG ƯU ĐÃI — Quý khách được lợi</span><b>− ${fmtVN(deal.tongCK)} đ</b></div>
   <div class="final"><span>GIÁ PHẢI THANH TOÁN</span><b>${fmtVN(deal.giaPhaiTT)} đ</b></div>

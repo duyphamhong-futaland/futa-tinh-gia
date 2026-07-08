@@ -44,7 +44,7 @@ function exportPhieuXLSX(p, mck, projName){
 }
 
 function _buildPhieuSheet(wb,p,method,mck,proj,wmId,dateStr){
-  const d=Pricing.dealCalc(p,{nhanh:method.pct||0,thanThiet:mck.thanThiet,muaSi:mck.muaSi,dacBiet:mck.dacBiet,noiThat:mck.noiThat,noiThatText:mck.noiThatText});
+  const d=Pricing.dealCalc(p,{nhanh:method.pct||0,thanThiet:mck.thanThiet,muaSi:mck.muaSi,dacBiet:mck.dacBiet,custom:mck.custom});
   const nm=(method.label||'PT').replace(/[\\\/*?:\[\]]/g,'').slice(0,31);
   const ws=wb.addWorksheet(nm,{views:[{showGridLines:false}]});
   ws.columns=[{width:40},{width:24},{width:10},{width:22},{width:20}];
@@ -82,9 +82,9 @@ function _buildPhieuSheet(wb,p,method,mck,proj,wmId,dateStr){
   const rMua=r; C('A'+rMua,'(3) Chiết khấu mua sỉ');C('C'+rMua,+mck.muaSi||0,{num:pf,h:'center'});F('D'+rMua,'ROUND((D'+rCB+'-D'+rThan+')*C'+rMua+',0)',d.lines[1].amount,{color:RED}); r++;
   const rDac=r; C('A'+rDac,'(4) Chiết khấu đặc biệt / khác');C('C'+rDac,+mck.dacBiet||0,{num:pf,h:'center'});F('D'+rDac,'ROUND((D'+rCB+'-D'+rThan+'-D'+rMua+')*C'+rDac+',0)',d.lines[2].amount,{color:RED}); r++;
   const rNhanh=r; C('A'+rNhanh,'(5) Chiết khấu thanh toán nhanh');C('C'+rNhanh,+method.pct||0,{num:pf,h:'center'});F('D'+rNhanh,'ROUND((D'+rCB+'-D'+rThan+'-D'+rMua+'-D'+rDac+')*C'+rNhanh+',0)',d.lines[3].amount,{color:RED}); r++;
-  let rNoi=0;
-  if(d.noiThat){ rNoi=r; C('A'+rNoi,'(6) '+(d.noiThatText||'Khuyến mãi giảm giá nội thất'),{wrap:true});C('D'+rNoi,d.noiThat,{num:money,h:'right',color:RED}); r++; }
-  const rTong=r; C('A'+rTong,'TỔNG ƯU ĐÃI — KHÁCH ĐƯỢC LỢI',{bold:true,fill:GOLD});F('D'+rTong,'D'+rThan+'+D'+rMua+'+D'+rDac+'+D'+rNhanh+(rNoi?'+D'+rNoi:''),d.tongCK,{bold:true,color:RED,fill:GOLD,size:12}); r++;
+  const rCustom=[];
+  (d.custom||[]).forEach((c,idx)=>{ const rr=r; C('A'+rr,'('+(6+idx)+') '+(c.text||'Chiết khấu thêm'),{wrap:true});C('D'+rr,c.amount,{num:money,h:'right',color:RED}); rCustom.push(rr); r++; });
+  const rTong=r; C('A'+rTong,'TỔNG ƯU ĐÃI — KHÁCH ĐƯỢC LỢI',{bold:true,fill:GOLD});F('D'+rTong,'D'+rThan+'+D'+rMua+'+D'+rDac+'+D'+rNhanh+rCustom.map(rr=>'+D'+rr).join(''),d.tongCK,{bold:true,color:RED,fill:GOLD,size:12}); r++;
   const rTT=r; C('A'+rTT,'GIÁ PHẢI THANH TOÁN (= (1) − TỔNG ƯU ĐÃI)',{bold:true,fill:LG,size:12});F('D'+rTT,'D'+rNY+'-D'+rTong,d.giaPhaiTT,{bold:true,color:GREEN,fill:LG,size:12}); r++;
   r++; // dòng trống ngăn cách
   // Chi tiết báo giá
