@@ -1,11 +1,11 @@
 /* FUTA Land — Công cụ tính giá · Service Worker (chạy offline trên điện thoại)
    Chiến lược: HTML/JS/CSS = network-first (online luôn lấy bản MỚI, offline fallback cache);
    ảnh/vendor/manifest = cache-first. Đổi CACHE khi cập nhật file. */
-const CACHE = 'futa-pricing-v11';
+const CACHE = 'futa-pricing-v12';
 const ASSETS = [
-  './', 'index.html', 'css/style.css?v=11',
-  'js/config.js?v=11', 'js/pricing.js?v=11', 'js/policies.js?v=11', 'js/data.js?v=11',
-  'js/datastore.js?v=11', 'js/export-xlsx.js?v=11', 'js/manage.js?v=11', 'js/app.js?v=11',
+  './', 'index.html', 'css/style.css?v=12',
+  'js/config.js?v=12', 'js/pricing.js?v=12', 'js/policies.js?v=12', 'js/data.js?v=12',
+  'js/datastore.js?v=12', 'js/export-xlsx.js?v=12', 'js/manage.js?v=12', 'js/app.js?v=12',
   'vendor/exceljs.min.js',
   'img/logo-futa-land-trans.png', 'img/watermark-futa.png', 'img/favicon.png',
   'img/icon-192.png', 'img/icon-512.png', 'img/apple-touch-icon.png',
