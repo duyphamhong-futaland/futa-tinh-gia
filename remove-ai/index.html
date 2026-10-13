@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Xoá nhãn AI khỏi ảnh — FUTA Land</title>
+<meta name="description" content="Gỡ metadata C2PA, IPTC, XMP, EXIF khiến Facebook, Instagram, Threads gắn nhãn “Thông tin về AI”. Xử lý ngay trên trình duyệt, không tải ảnh lên máy chủ.">
+<link rel="icon" href="../img/favicon.png">
+<link rel="stylesheet" href="css/remove-ai.css?v=1">
+<meta name="theme-color" content="#1B7F3B">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="./"><img src="../img/logo-futa-land-trans.png" alt="FUTA Land"><div><b>FUTA Land</b><small>Công cụ xử lý ảnh</small></div></a>
+  <nav class="nav"><a href="../index.html">🧮 Công cụ tính giá</a></nav>
+</header>
+
+<main class="wrap">
+  <section class="hero">
+    <span class="eyebrow">Công cụ miễn phí · chạy 100% trên trình duyệt</span>
+    <h1>Xoá nhãn AI khỏi ảnh</h1>
+    <p class="lead">Gỡ sạch metadata <b>C2PA</b>, <b>IPTC</b>, <b>XMP</b>, <b>EXIF</b> và thông số prompt — những dữ liệu khiến Facebook, Instagram, Threads tự gắn nhãn <i>“Thông tin về AI”</i>. Ảnh giữ nguyên từng điểm ảnh và không rời khỏi máy bạn.</p>
+    <ul class="pills">
+      <li>🔒 Không tải ảnh lên máy chủ</li>
+      <li>✨ Giữ nguyên chất lượng</li>
+      <li>📦 Hàng loạt + tải ZIP</li>
+      <li>🔎 Tự kiểm tra lại sau khi xoá</li>
+    </ul>
+  </section>
+
+  <section class="card tool" aria-label="Công cụ xoá nhãn AI">
+    <label id="drop" class="drop" for="file" tabindex="0">
+      <input id="file" type="file" accept="image/*,.heic,.heif,.avif" multiple hidden>
+      <div class="drop-ico" aria-hidden="true">🖼️</div>
+      <div class="drop-t">Kéo thả ảnh vào đây hoặc <u>bấm để chọn ảnh</u></div>
+      <div class="drop-s">JPG · PNG · WebP · GIF · AVIF · HEIC — chọn nhiều ảnh một lúc, hoặc dán bằng Ctrl+V</div>
+    </label>
+
+    <div class="opts">
+      <div class="opt-group">
+        <span class="opt-label">Chế độ xoá</span>
+        <div class="seg" role="radiogroup" aria-label="Chế độ xoá">
+          <label><input type="radio" name="mode" value="lossless" checked><span>Giữ nguyên chất lượng <em>khuyên dùng</em></span></label>
+          <label><input type="radio" name="mode" value="reencode"><span>Vẽ lại ảnh</span></label>
+        </div>
+      </div>
+      <div class="opt-group" id="reOpts" hidden>
+        <label class="opt-label" for="fmt">Định dạng</label>
+        <select id="fmt">
+          <option value="keep">Giữ định dạng gốc</option>
+          <option value="image/jpeg">JPG</option>
+          <option value="image/png">PNG</option>
+          <option value="image/webp">WebP</option>
+        </select>
+        <label class="opt-label" for="q">Chất lượng <b id="qv">92</b></label>
+        <input id="q" type="range" min="60" max="100" value="92">
+      </div>
+      <div class="opt-group">
+        <label class="ck"><input type="checkbox" id="keepOri" checked> Giữ hướng xoay ảnh</label>
+        <label class="ck"><input type="checkbox" id="keepIcc" checked> Giữ hồ sơ màu (ICC)</label>
+      </div>
+      <div class="opt-group">
+        <label class="opt-label" for="naming">Tên file tải về</label>
+        <select id="naming">
+          <option value="suffix">tên-gốc_clean</option>
+          <option value="same">Giữ nguyên tên gốc</option>
+          <option value="random">Tên ngẫu nhiên (IMG_…)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="bar" id="bar" hidden>
+      <div id="summary" class="summary" aria-live="polite"></div>
+      <div class="bar-acts">
+        <button class="btn primary" id="zipBtn" type="button">⬇ Tải tất cả (.zip)</button>
+        <button class="btn ghost" id="clearBtn" type="button">Xoá danh sách</button>
+      </div>
+    </div>
+    <ul id="list" class="list"></ul>
+  </section>
+
+  <section class="sec">
+    <h2>Cách hoạt động</h2>
+    <ol class="steps">
+      <li><b>Chọn hoặc kéo thả ảnh</b><p>Ảnh tạo/chỉnh bằng ChatGPT, Gemini, Firefly, Midjourney, Canva, Photoshop… Chọn nhiều ảnh cùng lúc được.</p></li>
+      <li><b>Tự động phát hiện &amp; xoá</b><p>Công cụ đọc từng khối metadata, chỉ ra dấu vết AI tìm thấy rồi cắt bỏ — không nén lại ảnh.</p></li>
+      <li><b>Tải ảnh sạch về</b><p>File được kiểm tra lại lần nữa trước khi tải. Tải từng ảnh hoặc cả gói ZIP.</p></li>
+    </ol>
+  </section>
+
+  <section class="sec">
+    <h2>Công cụ xoá những gì?</h2>
+    <div class="tb-wrap">
+      <table class="tb">
+        <thead><tr><th>Loại dữ liệu</th><th>Chứa gì</th><th>Ảnh hưởng</th></tr></thead>
+        <tbody>
+          <tr><td><b>C2PA / Content Credentials</b></td><td>Chữ ký số ghi rõ ảnh tạo bởi ChatGPT, DALL·E, Firefly, Gemini, Copilot, Photoshop Generative Fill…</td><td><span class="badge ai">Gắn nhãn AI</span></td></tr>
+          <tr><td><b>IPTC Digital Source Type</b></td><td>Mã <code>trainedAlgorithmicMedia</code>, <code>compositeWithTrainedAlgorithmicMedia</code> — “ảnh do AI tạo / chỉnh”</td><td><span class="badge ai">Gắn nhãn AI</span></td></tr>
+          <tr><td><b>XMP</b></td><td>Phần mềm tạo, lịch sử chỉnh sửa, mô tả, tác giả</td><td><span class="badge meta">Lộ nguồn gốc</span></td></tr>
+          <tr><td><b>PNG text</b></td><td>Prompt, seed, sampler, workflow của Stable Diffusion, ComfyUI, NovelAI…</td><td><span class="badge meta">Lộ prompt</span></td></tr>
+          <tr><td><b>EXIF</b></td><td>Thiết bị, phần mềm, thời gian, toạ độ GPS, ảnh thu nhỏ, số serial</td><td><span class="badge meta">Lộ riêng tư</span></td></tr>
+          <tr><td><b>Khác</b></td><td>Photoshop/IPTC, chú thích, ảnh phụ MPF, dữ liệu ẩn sau ảnh</td><td><span class="badge meta">Dư thừa</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="hint">Mặc định công cụ <b>giữ lại</b> hướng xoay và hồ sơ màu ICC (không chứa dấu hiệu AI) để ảnh hiển thị đúng chiều, đúng màu.</p>
+  </section>
+
+  <section class="sec faq">
+    <h2>Câu hỏi thường gặp</h2>
+    <details>
+      <summary>Vì sao ảnh của tôi bị Facebook gắn nhãn “Thông tin về AI”?</summary>
+      <p>Khi tạo hoặc chỉnh ảnh bằng ChatGPT, Gemini, Adobe Firefly, Photoshop (Generative Fill)…, phần mềm ghi vào file chuẩn C2PA hoặc mã IPTC “digital source type”. Meta đọc dữ liệu này lúc bạn đăng ảnh và tự gắn nhãn — kể cả khi AI chỉ sửa một vùng nhỏ.</p>
+    </details>
+    <details>
+      <summary>“Giữ nguyên chất lượng” khác “Vẽ lại ảnh” thế nào?</summary>
+      <p><b>Giữ nguyên chất lượng:</b> cắt bỏ các khối metadata khỏi file, không nén lại — điểm ảnh y hệt bản gốc, dung lượng thường còn giảm. Hỗ trợ JPG, PNG, WebP, GIF (giữ ảnh động).<br><b>Vẽ lại ảnh:</b> giải mã rồi xuất file mới bằng trình duyệt — chắc chắn không còn metadata nào và đổi được định dạng, nhưng JPG/WebP sẽ bị nén lại. Ảnh AVIF/HEIC luôn dùng chế độ này.</p>
+    </details>
+    <details>
+      <summary>Ảnh có bị gửi lên máy chủ không?</summary>
+      <p>Không. Toàn bộ xử lý chạy bằng JavaScript ngay trong trình duyệt; sau khi mở trang, ngắt mạng vẫn dùng được.</p>
+    </details>
+    <details>
+      <summary>Có xoá được watermark ẩn (SynthID…) hay logo trên ảnh không?</summary>
+      <p>Không. Một số hãng (ví dụ Google SynthID) nhúng watermark vô hình ngay trong điểm ảnh; công cụ không can thiệp điểm ảnh nên watermark này vẫn còn và nền tảng vẫn có thể nhận diện bằng hệ thống riêng. Logo/watermark nhìn thấy được cũng không bị xoá.</p>
+    </details>
+    <details>
+      <summary>Vì sao nên giữ “hướng xoay” và “hồ sơ màu”?</summary>
+      <p>Ảnh chụp điện thoại thường lưu hướng xoay trong EXIF — bỏ đi ảnh có thể bị nằm ngang. Hồ sơ màu ICC (Display P3…) giúp màu hiển thị đúng. Hai thông tin này không chứa dấu hiệu AI.</p>
+    </details>
+    <details>
+      <summary>Lưu ý khi dùng ảnh AI cho truyền thông dự án</summary>
+      <p>Xoá metadata là thao tác kỹ thuật bình thường (bảo vệ riêng tư, giảm dung lượng). Dù vậy vẫn cần tuân thủ chính sách công bố nội dung AI của từng nền tảng và quy định về quảng cáo: ảnh phối cảnh, minh hoạ dự án tạo bằng AI nên ghi chú rõ <i>“Hình ảnh mang tính minh hoạ”</i>.</p>
+    </details>
+  </section>
+</main>
+
+<footer class="foot">FUTA Land · Xoá nhãn AI khỏi ảnh · xử lý cục bộ trên trình duyệt — không lưu, không gửi ảnh đi đâu.</footer>
+
+<script src="js/meta.js?v=1"></script>
+<script src="js/app.js?v=1"></script>
+</body>
+</html>

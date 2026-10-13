@@ -53,4 +53,20 @@ pricing-tool/
 
 ```
 
+## 🧽 Công cụ Xoá nhãn AI khỏi ảnh (`remove-ai/`)
+Trang độc lập, mở `remove-ai/index.html` (hoặc `/remove-ai/` khi đã deploy). Gỡ metadata **C2PA (Content Credentials)**, **IPTC Digital Source Type**, **XMP**, **EXIF**, prompt Stable Diffusion/ComfyUI… — những dữ liệu khiến Facebook/Instagram/Threads gắn nhãn *“Thông tin về AI”*.
+- **Chạy 100% trên trình duyệt**, không gửi ảnh đi đâu, không cần thư viện ngoài.
+- **Giữ nguyên chất lượng** (mặc định): cắt bỏ khối metadata, không nén lại → điểm ảnh y hệt bản gốc. Hỗ trợ JPG · PNG/APNG · WebP · GIF động. Mặc định giữ lại hướng xoay + hồ sơ màu ICC.
+- **Vẽ lại ảnh**: xuất lại bằng canvas (JPG/PNG/WebP, chỉnh chất lượng) — dùng cho AVIF/HEIC hoặc khi cần đổi định dạng.
+- Hiện danh sách metadata **trước/sau**, tự kiểm tra lại file kết quả, tải từng ảnh hoặc **cả gói ZIP**; kéo thả / dán Ctrl+V.
+- Không xoá được watermark ẩn trong điểm ảnh (SynthID…) hay logo nhìn thấy được.
+```
+remove-ai/
+├── index.html
+├── css/remove-ai.css
+└── js/
+    ├── meta.js   # lõi: phát hiện + xoá metadata (JPEG/PNG/WebP/GIF), tạo ZIP — chạy được cả trên Node
+    └── app.js    # giao diện: kéo thả, xử lý hàng loạt, vẽ lại bằng canvas, tải về
+```
+
 *Giá mang tính tạm tính tại ngày xuất. Giá trị chính thức theo hợp đồng mua bán. FUTA Land — Chất lượng là danh dự.*
