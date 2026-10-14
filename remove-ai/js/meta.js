@@ -310,7 +310,7 @@
   /* ---------- Quét chung (AVIF/HEIC/dữ liệu đuôi…) ---------- */
   function scanGeneric(b, out, info, g) {
     const t = L1.decode(b);
-    const xm = t.match(/<x:xmpmeta[\s\S]*?<\/x:xmpmeta>/g);
+    const xm = U8.decode(b).match(/<x:xmpmeta[\s\S]*?<\/x:xmpmeta>/g);
     if (xm) xmpFindings(xm.join('\n'), out, g + ' · XMP');
     const k = t.search(/Exif\0\0|MM\0\x2A\0\0\0\x08|II\x2A\0\x08\0\0\0/);
     if (k >= 0) {
@@ -366,8 +366,8 @@
     for (const sg of segs) {
       const k = jpegKind(b, sg);
       if (k === 'exif') { const t = parseTiff(b, sg.d + 6, sg.e); if (t) info.orientation = t.orientation; exifFindings(t, out); }
-      else if (k === 'xmp') xmp.push(L1.decode(b.subarray(sg.d + 29, sg.e)));
-      else if (k === 'xmpx') xmp.push(L1.decode(b.subarray(sg.d + 75, sg.e)));
+      else if (k === 'xmp') xmp.push(U8.decode(b.subarray(sg.d + 29, sg.e)));      // XMP luôn là UTF-8
+      else if (k === 'xmpx') xmp.push(U8.decode(b.subarray(sg.d + 75, sg.e)));
       else if (k === 'jumbf') jumbf.push(b.subarray(sg.d + 8, sg.e));
       else if (k === 'iptc') iptcFindings(b, sg.d + 14, sg.e, out);
       else if (k === 'icc') out.push(F('info', 'ICC', 'Hồ sơ màu ICC'));
@@ -493,7 +493,7 @@
     const { chunks, end } = riffChunks(b);
     for (const c of chunks) {
       if (c.id === 'EXIF') { const t = webpExif(b, c); if (t) info.orientation = t.orientation; exifFindings(t, out); }
-      else if (c.id === 'XMP ') xmpFindings(L1.decode(b.subarray(c.d, c.de)), out);
+      else if (c.id === 'XMP ') xmpFindings(U8.decode(b.subarray(c.d, c.de)), out);
       else if (c.id === 'C2PA') c2paFindings(b.subarray(c.d, c.de), out);
       else if (c.id === 'ICCP') out.push(F('info', 'ICC', 'Hồ sơ màu ICC'));
       else if (!WEBP_KEEP.has(c.id)) out.push(F('meta', 'WebP', 'Khối dữ liệu phụ “' + c.id.trim() + '”', kb(c.e - c.s)));
@@ -548,7 +548,7 @@
         let t = '', j = k.s + 2; while (j < k.e && b[j]) { t += L1.decode(b.subarray(j + 1, j + 1 + b[j])); j += b[j] + 1; }
         out.push(F('meta', 'GIF', 'Chú thích trong file', t)); aiScan(t, 'GIF', out);
       } else if (k.label === 0xFF && k.app === 'XMP DataXMP') {
-        const m = L1.decode(b.subarray(k.s, k.e)).match(/<x:xmpmeta[\s\S]*?<\/x:xmpmeta>/);
+        const m = U8.decode(b.subarray(k.s, k.e)).match(/<x:xmpmeta[\s\S]*?<\/x:xmpmeta>/);
         xmpFindings(m ? m[0] : '', out);
       } else if (k.label === 0xFF && k.app.startsWith('ICCRGBG1')) out.push(F('info', 'ICC', 'Hồ sơ màu ICC'));
       else if (!gifKeep(k, { keepIcc: true })) out.push(F('meta', 'GIF', 'Khối mở rộng ' + (k.app || '0x' + k.label.toString(16)), kb(k.e - k.s)));

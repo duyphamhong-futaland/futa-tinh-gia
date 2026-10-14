@@ -268,7 +268,9 @@
   }
 
   /* ---------- Tải gói ZIP ---------- */
+  let saver = null;   // trang nhúng (vd. Artifact claude.ai) có thể thay cách lưu file: saver(blob, tên)
   function saveBlob(blob, name) {
+    if (saver) { saver(blob, name); return; }
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob); a.download = name;
     document.body.appendChild(a); a.click(); a.remove();
@@ -320,6 +322,13 @@
   $('#naming').addEventListener('change', () => { syncOptsUi(); renameAll(); });
 
   $('#list').addEventListener('click', e => {
+    const dl = e.target.closest('a[download]');
+    if (dl && saver) {
+      e.preventDefault();
+      const it = items.find(i => String(i.id) === dl.closest('.item').dataset.id);
+      if (it && it.out) saveBlob(new Blob([it.out.bytes], { type: it.out.mime }), it.out.name);
+      return;
+    }
     const btn = e.target.closest('[data-act=rm]'); if (!btn) return;
     const it = items.find(i => String(i.id) === btn.closest('.item').dataset.id);
     if (it) { removeItem(it); renderBar(); }
@@ -327,6 +336,6 @@
   $('#zipBtn').addEventListener('click', downloadZip);
   $('#clearBtn').addEventListener('click', () => { items.forEach(i => { if (!i.removed) removeItem(i); }); renderBar(); });
 
-  // Cho tiện ích trình duyệt (plugins/chrome-extension) đưa ảnh lấy từ web vào công cụ
-  window.RemoveAIApp = { addFiles };
+  // Cho trang nhúng: tiện ích trình duyệt đưa ảnh lấy từ web vào; Artifact claude.ai thay cách lưu file
+  window.RemoveAIApp = { addFiles, setSaver: fn => { saver = typeof fn === 'function' ? fn : null; } };
 })();
