@@ -60,6 +60,11 @@ Trang độc lập, mở `remove-ai/index.html` (hoặc `/remove-ai/` khi đã d
 - **Vẽ lại ảnh**: xuất lại bằng canvas (JPG/PNG/WebP, chỉnh chất lượng) — dùng cho AVIF/HEIC hoặc khi cần đổi định dạng.
 - Hiện danh sách metadata **trước/sau**, tự kiểm tra lại file kết quả, tải từng ảnh hoặc **cả gói ZIP**; kéo thả / dán Ctrl+V.
 - Không xoá được watermark ẩn trong điểm ảnh (SynthID…) hay logo nhìn thấy được.
+- **Đóng gói thành plugin** (thư mục `plugins/`, hướng dẫn cài trong [`plugins/README.md`](plugins/README.md)):
+  - `plugins/dist/futa-xoa-nhan-ai-chrome.zip` — tiện ích Chrome/Edge, có menu **chuột phải vào ảnh → “Xoá nhãn AI khỏi ảnh này”**;
+  - `plugins/dist/futa-xoa-nhan-ai.plugin` — plugin cho Claude: gửi ảnh, nói “xoá nhãn AI”;
+  - `plugins/dist/futa-xoa-nhan-ai-wordpress.zip` — plugin WordPress: tự xoá khi tải ảnh lên, cột “Nhãn AI”, xử lý hàng loạt.
+  - Sửa code ở `remove-ai/` xong chạy `node plugins/build.js` để đóng gói lại.
 ```
 remove-ai/
 ├── index.html

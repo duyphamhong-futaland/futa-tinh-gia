@@ -326,4 +326,7 @@
   });
   $('#zipBtn').addEventListener('click', downloadZip);
   $('#clearBtn').addEventListener('click', () => { items.forEach(i => { if (!i.removed) removeItem(i); }); renderBar(); });
+
+  // Cho tiện ích trình duyệt (plugins/chrome-extension) đưa ảnh lấy từ web vào công cụ
+  window.RemoveAIApp = { addFiles };
 })();

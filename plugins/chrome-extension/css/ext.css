@@ -1,0 +1,6 @@
+/* Thông báo của tiện ích (nhận ảnh từ menu chuột phải) */
+#extMsg:empty{display:none}
+#extMsg{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+.ext-msg{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 12px;border-radius:10px;background:var(--lg);border:1px solid #a8dbb8;font-size:13.5px}
+.ext-msg span{flex:1 1 260px}
+.ext-msg.warn{background:var(--amberbg);border-color:#f0d08a;color:var(--amber)}
