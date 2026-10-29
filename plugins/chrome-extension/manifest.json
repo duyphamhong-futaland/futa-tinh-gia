@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "FUTA Land — Xoá nhãn AI khỏi ảnh",
   "short_name": "Xoá nhãn AI",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Gỡ metadata C2PA, IPTC, XMP, EXIF khiến Facebook/Instagram gắn nhãn “Thông tin về AI”. Xử lý ngay trên máy, không gửi ảnh đi đâu.",
   "icons": { "16": "icons/icon-16.png", "32": "icons/icon-32.png", "48": "icons/icon-48.png", "128": "icons/icon-128.png" },
   "action": {

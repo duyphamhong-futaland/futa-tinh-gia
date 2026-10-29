@@ -58,7 +58,7 @@ Trang độc lập, mở `remove-ai/index.html` (hoặc `/remove-ai/` khi đã d
 - **Chạy 100% trên trình duyệt**, không gửi ảnh đi đâu, không cần thư viện ngoài.
 - **Giữ nguyên chất lượng** (mặc định): cắt bỏ khối metadata, không nén lại → điểm ảnh y hệt bản gốc. Hỗ trợ JPG · PNG/APNG · WebP · GIF động. Mặc định giữ lại hướng xoay + hồ sơ màu ICC.
 - **Vẽ lại ảnh**: xuất lại bằng canvas (JPG/PNG/WebP, chỉnh chất lượng) — dùng cho AVIF/HEIC hoặc khi cần đổi định dạng.
-- Hiện danh sách metadata **trước/sau**, tự kiểm tra lại file kết quả, tải từng ảnh hoặc **cả gói ZIP**; kéo thả / dán Ctrl+V.
+- **Bản đồ file** trước/sau cho từng ảnh (dải màu theo dung lượng thật: dữ liệu ảnh · nhãn AI · metadata khác · phần giữ lại), danh sách metadata chi tiết, tự kiểm tra lại file kết quả, tải từng ảnh hoặc **cả gói ZIP**; kéo thả / dán Ctrl+V / nút “Thử với ảnh mẫu”. Giao diện tự theo nền sáng/tối của máy.
 - Không xoá được watermark ẩn trong điểm ảnh (SynthID…) hay logo nhìn thấy được.
 - **Đóng gói thành plugin** (thư mục `plugins/`, hướng dẫn cài trong [`plugins/README.md`](plugins/README.md)):
   - `plugins/dist/futa-xoa-nhan-ai-chrome.zip` — tiện ích Chrome/Edge, có menu **chuột phải vào ảnh → “Xoá nhãn AI khỏi ảnh này”**;
@@ -70,7 +70,8 @@ remove-ai/
 ├── index.html
 ├── css/remove-ai.css
 └── js/
-    ├── meta.js   # lõi: phát hiện + xoá metadata (JPEG/PNG/WebP/GIF), tạo ZIP — chạy được cả trên Node
+    ├── meta.js   # lõi: phát hiện + xoá metadata (JPEG/PNG/WebP/GIF), bản đồ khối dữ liệu, tạo ZIP — chạy được cả trên Node
+    ├── sample.js # ảnh mẫu minh hoạ (metadata giả lập) cho nút “Thử với ảnh mẫu”
     └── app.js    # giao diện: kéo thả, xử lý hàng loạt, vẽ lại bằng canvas, tải về
 ```
 

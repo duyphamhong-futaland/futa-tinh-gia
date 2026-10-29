@@ -35,6 +35,9 @@
   function syncOptsUi() {
     const o = readOpts(), re = o.mode === 'reencode';
     $('#reOpts').hidden = !re;
+    $('#modeHint').textContent = re
+      ? 'Xuất ảnh mới từ điểm ảnh: sạch hoàn toàn, đổi được định dạng; JPG/WebP sẽ bị nén lại.'
+      : 'Chỉ cắt metadata, không nén lại ảnh (JPG · PNG · WebP · GIF). Ảnh AVIF/HEIC sẽ được vẽ lại.';
     $('#qv').textContent = o.quality;
     for (const id of ['#keepOri', '#keepIcc']) {
       $(id).disabled = re;
@@ -156,44 +159,58 @@
   }
 
   /* ---------- Hiển thị ---------- */
-  const countOf = (a, lv) => a ? a.findings.filter(f => f.level === lv).length : 0;
   const realCount = a => a ? a.findings.filter(f => f.level !== 'info').length : 0;
+
+  // Bản đồ file: dải màu theo dung lượng thật; `scale` = số byte ứng với 100% chiều rộng
+  function fmap(label, a, scale) {
+    const blocks = (a && a.blocks) || [], total = a ? a.size : 0;
+    const w = scale ? Math.max(1.5, Math.min(100, total / scale * 100)) : 100;
+    const aria = label + ': ' + blocks.map(x => x.name + ' ' + M.kb(x.size)).join(', ');
+    return '<div class="fmap" role="img" aria-label="' + esc(aria) + '"><span class="fmap-k">' + label + '</span>' +
+      '<div class="fmap-track"><div class="fmap-bar" style="width:' + w.toFixed(2) + '%">' +
+      blocks.map(x => {
+        const share = total ? x.size / total : 0;
+        const tip = x.name + ' · ' + M.kb(x.size);
+        const text = share * w >= 26 ? '<i>' + esc(x.level === 'image' ? M.kb(x.size) : tip) + '</i>' : '';
+        return '<span class="seg l-' + x.level + '" style="flex-grow:' + (share * 100).toFixed(3) + '" title="' + esc(tip) + '">' + text + '</span>';
+      }).join('') +
+      '</div></div><span class="fmap-size">' + M.kb(total) + '</span></div>';
+  }
 
   function chips(a) {
     const out = [], add = (t, cls) => { if (!out.some(c => c[0] === t)) out.push([t, cls]); };
     for (const f of a.findings) {
-      if (f.level === 'ai') {
-        if (f.label.startsWith('Dấu vết công cụ AI: ')) add(f.label.slice(f.label.indexOf(': ') + 2), 'ai');
-        else if (f.label.startsWith('Content Credentials')) add('C2PA', 'ai');
-        else if (f.label.startsWith('Nguồn ảnh:')) add('IPTC: ảnh AI', 'ai');
-        else add('Prompt AI', 'ai');
-      }
+      if (f.level !== 'ai') continue;
+      if (f.label.startsWith('Dấu vết công cụ AI: ')) add(f.label.slice(f.label.indexOf(': ') + 2), 'ai');
+      else if (f.label.startsWith('Content Credentials')) add('C2PA', 'ai');
+      else if (f.label.startsWith('Nguồn ảnh:')) add('IPTC: ảnh AI', 'ai');
+      else add('Prompt AI', 'ai');
     }
     for (const f of a.findings) {
       if (f.level !== 'meta') continue;
-      if (f.label.includes('GPS')) add('📍 GPS', '');
-      else add(f.group.split(' · ')[0], '');
+      add(f.label.includes('GPS') ? 'Toạ độ GPS' : f.group.split(' · ')[0], '');
     }
-    return out.slice(0, 9).map(([t, c]) => '<span class="tag ' + c + '">' + esc(t) + '</span>').join('');
+    return out.slice(0, 10).map(([t, c]) => '<span class="tag ' + c + '">' + esc(t) + '</span>').join('');
   }
   function flist(a, after) {
     if (!a || !a.findings.length) return '<ul class="fl"><li class="none">✓ ' + (after ? 'Không còn metadata nào' : 'Không có metadata') + '</li></ul>';
     return '<ul class="fl">' + a.findings.map(f =>
-      '<li class="' + f.level + '"><span class="g">' + esc(f.group) + '</span>' + esc(f.label) +
-      (f.level === 'info' && after ? ' <em>(giữ lại)</em>' : '') +
+      '<li class="' + f.level + '"><span class="g">' + esc(f.group) + '</span>' + esc(f.label.replace('📍 ', '')) +
+      (f.level === 'info' && after ? ' <em>· giữ lại</em>' : '') +
       (f.detail ? '<small>' + esc(f.detail) + '</small>' : '') + '</li>').join('') + '</ul>';
   }
   function badges(it) {
-    if (it.status === 'error') return '<span class="badge ai">Lỗi</span>';
-    if (!it.before || it.status !== 'done') return '<span class="badge run">Đang xử lý…</span>';
+    if (it.status === 'error') return '<span class="pill ai">Lỗi</span>';
+    if (!it.before || it.status !== 'done') return '<span class="pill run">Đang xử lý…</span>';
     const b = it.before, a = it.out.after;
-    let h = b.hasAi ? '<span class="badge ai">⚠ Phát hiện nhãn AI</span>'
-      : realCount(b) ? '<span class="badge meta">Có metadata</span>' : '<span class="badge ok">Không có metadata</span>';
-    if (a.hasAi) h += '<span class="arrow">→</span><span class="badge ai">Vẫn còn dấu vết AI</span>';
-    else if (realCount(a)) h += '<span class="arrow">→</span><span class="badge meta">Còn ' + realCount(a) + ' mục</span>';
-    else if (realCount(b)) h += '<span class="arrow">→</span><span class="badge ok">✓ Đã làm sạch</span>';
+    let h = b.hasAi ? '<span class="pill ai">Có nhãn AI</span>'
+      : realCount(b) ? '<span class="pill meta">Có metadata</span>' : '<span class="pill ok">Không có metadata</span>';
+    if (a.hasAi) h += '<span class="arrow">→</span><span class="pill ai">Vẫn còn dấu vết AI</span>';
+    else if (realCount(a)) h += '<span class="arrow">→</span><span class="pill meta">Còn ' + realCount(a) + ' mục</span>';
+    else if (realCount(b)) h += '<span class="arrow">→</span><span class="pill ok">✓ Đã làm sạch</span>';
     return h;
   }
+  const DL_ICON = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2v8m0 0L4.8 6.8M8 10l3.2-3.2M3 13h10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
   function render(it) {
     let li = document.getElementById('it' + it.id);
@@ -203,26 +220,29 @@
     const fmt = M.NAME[it.format] || (it.name.split('.').pop() || '').toUpperCase();
     const thumb = (done && it.outUrl) || it.srcUrl;
     const removed = done ? Math.max(0, realCount(b) - realCount(o.after)) : 0;
+    li.classList.toggle('is-ai', !!(b && b.hasAi));
     let sub = esc(fmt) + '<span class="dim">' + (it.dim ? ' · ' + it.dim : '') + '</span> · ' + M.kb(it.size);
     if (done) {
       const pct = it.size ? Math.round((1 - o.size / it.size) * 100) : 0;
-      sub += ' → ' + M.kb(o.size) + (pct > 0 ? ' <span class="save">(−' + pct + '%)</span>' : '') +
-        (o.ext !== M.EXT[it.format] ? ' · ' + esc(o.ext.toUpperCase()) : '') + (removed ? ' · đã xoá <b>' + removed + '</b> mục' : '');
+      sub += ' → ' + M.kb(o.size) + (pct > 0 ? ' <span class="save">−' + pct + '%</span>' : '') +
+        (o.ext !== M.EXT[it.format] ? ' · ' + esc(o.ext.toUpperCase()) : '') + (removed ? ' · đã xoá ' + removed + ' mục' : '');
     }
+    const scale = b ? Math.max(b.size, done ? o.after.size : 0) : 0;
     li.innerHTML =
       '<div class="thumb">' + (thumb ? '<img alt="" src="' + thumb + '">' : esc(fmt)) + '</div>' +
-      '<div class="body">' +
+      '<div class="head">' +
         '<div class="row1"><span class="name">' + esc(it.name) + '</span>' + badges(it) + '</div>' +
         '<div class="sub">' + sub + '</div>' +
-        (b && b.findings.length ? '<div class="tags">' + chips(b) + '</div>' : '') +
-        (done && o.note ? '<div class="note">ℹ ' + esc(o.note) + '</div>' : '') +
-        (it.status === 'error' ? '<div class="err">' + esc(it.error) + '</div>' : '') +
       '</div>' +
       '<div class="acts">' +
-        (done ? '<a class="btn primary sm" href="' + it.outUrl + '" download="' + esc(o.name) + '">⬇ Tải ảnh</a>' : '') +
-        '<button class="x" type="button" data-act="rm" title="Bỏ ảnh này">✕ Bỏ</button>' +
+        (done ? '<a class="btn primary sm" href="' + it.outUrl + '" download="' + esc(o.name) + '">' + DL_ICON + 'Tải ảnh</a>' : '') +
+        '<button class="x" type="button" data-act="rm" title="Bỏ ảnh này" aria-label="Bỏ ảnh ' + esc(it.name) + '">✕</button>' +
       '</div>' +
-      (done ? '<details class="det"' + (it.open ? ' open' : '') + '><summary>Chi tiết metadata (' + b.findings.length + ' mục trước → ' + o.after.findings.length + ' mục sau)</summary>' +
+      (b ? '<div class="maps">' + fmap('Trước', b, scale) + (done ? fmap('Sau', o.after, scale) : '') + '</div>' : '') +
+      (b && b.findings.length ? '<div class="tags">' + chips(b) + '</div>' : '') +
+      (done && o.note ? '<p class="note">' + esc(o.note) + '</p>' : '') +
+      (it.status === 'error' ? '<p class="err">' + esc(it.error) + '</p>' : '') +
+      (done ? '<details class="det"' + (it.open ? ' open' : '') + '><summary>Chi tiết metadata · ' + b.findings.length + ' mục trước, ' + o.after.findings.length + ' mục sau</summary>' +
         '<div class="cols"><div><h4>Trước khi xoá</h4>' + flist(b) + '</div><div><h4>Sau khi xoá</h4>' + flist(o.after, true) + '</div></div></details>' : '');
     const img = li.querySelector('.thumb img');
     if (img) {
@@ -240,14 +260,49 @@
   function renderBar() {
     const live = items.filter(i => !i.removed);
     $('#bar').hidden = !live.length;
+    $('#empty').hidden = !!live.length;
     if (!live.length) return;
     const done = live.filter(i => i.status === 'done');
     const ai = live.filter(i => i.before && i.before.hasAi).length;
     const saved = done.reduce((s, i) => s + i.size - i.out.size, 0);
-    $('#summary').innerHTML = '<b>' + live.length + '</b> ảnh · ' +
-      (ai ? '<span class="red"><b>' + ai + '</b> ảnh có nhãn AI</span>' : 'không ảnh nào có nhãn AI') +
-      ' · đã làm sạch <b>' + done.length + '/' + live.length + '</b>' + (saved > 0 ? ' · giảm ' + M.kb(saved) : '');
+    const st = (n, label, cls) => '<span class="st ' + (cls || '') + '"><b>' + n + '</b>' + label + '</span>';
+    $('#summary').innerHTML = st(live.length, 'ảnh') + st(ai, 'có nhãn AI', ai ? 'red' : '') +
+      st(done.length + '/' + live.length, 'đã làm sạch', done.length === live.length ? 'ok' : '') +
+      (saved > 0 ? st(M.kb(saved), 'nhẹ hơn') : '');
     $('#zipBtn').disabled = !done.length;
+  }
+
+  /* ---------- Thông báo trên trang (dùng chung cho tiện ích trình duyệt, Artifact…) ---------- */
+  function notify(text, kind, buttons) {
+    const row = document.createElement('div');
+    row.className = 'ext-msg ' + (kind || '');
+    const p = document.createElement('span'); p.textContent = text; row.appendChild(p);
+    for (const [label, fn, primary] of buttons || []) {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'btn sm ' + (primary ? 'primary' : 'ghost'); b.textContent = label;
+      b.addEventListener('click', () => fn(row));
+      row.appendChild(b);
+    }
+    $('#notices').appendChild(row);
+    return row;
+  }
+
+  /* ---------- Ảnh mẫu (js/sample.js, nạp khi cần) ---------- */
+  function sampleFile() {
+    const s = window.RemoveAISample;
+    const bin = atob(s.b64), u = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+    return new File([u], s.name, { type: s.type });
+  }
+  function loadSample() {
+    if (window.RemoveAISample) { addFiles([sampleFile()]); return Promise.resolve(); }
+    return new Promise(res => {
+      const sc = document.createElement('script');
+      sc.src = 'js/sample.js?v=1';
+      sc.onload = () => { if (window.RemoveAISample) addFiles([sampleFile()]); res(); };
+      sc.onerror = () => { notify('Không tải được ảnh mẫu. Hãy thử với một ảnh của bạn.', 'warn'); res(); };
+      document.head.appendChild(sc);
+    });
   }
 
   function removeItem(it) {
@@ -334,8 +389,9 @@
     if (it) { removeItem(it); renderBar(); }
   });
   $('#zipBtn').addEventListener('click', downloadZip);
+  $('#sampleBtn').addEventListener('click', () => { loadSample(); });
   $('#clearBtn').addEventListener('click', () => { items.forEach(i => { if (!i.removed) removeItem(i); }); renderBar(); });
 
   // Cho trang nhúng: tiện ích trình duyệt đưa ảnh lấy từ web vào; Artifact claude.ai thay cách lưu file
-  window.RemoveAIApp = { addFiles, setSaver: fn => { saver = typeof fn === 'function' ? fn : null; } };
+  window.RemoveAIApp = { addFiles, loadSample, notify, setSaver: fn => { saver = typeof fn === 'function' ? fn : null; } };
 })();

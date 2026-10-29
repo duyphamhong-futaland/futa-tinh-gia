@@ -561,6 +561,77 @@
     return concat(parts);
   }
 
+  /* ---------- Bản đồ file: các khối theo thứ tự & dung lượng thật (để vẽ trên giao diện) ---------- */
+  const BLOCK = {
+    image: 'Dữ liệu ảnh', c2pa: 'C2PA', xmp: 'XMP', exif: 'EXIF', iptc: 'IPTC', text: 'Văn bản / prompt',
+    icc: 'Hồ sơ màu ICC', orient: 'Hướng xoay', extra: 'Ảnh phụ', other: 'Khối khác', trailer: 'Dữ liệu sau ảnh',
+  };
+  const BLOCK_GROUPS = { c2pa: ['C2PA'], xmp: ['XMP'], exif: ['EXIF'], iptc: ['IPTC'], text: ['PNG text', 'Comment', 'GIF'], trailer: ['Trailer'] };
+  // EXIF chỉ còn hướng xoay (do công cụ ghi lại) → tính là thông tin hiển thị, không phải metadata
+  const exifKind = t => t && t.orientation > 1 && !(t.make || t.model || t.software || t.artist || t.description || t.copyright ||
+    t.datetime || t.userComment || t.xp || t.lens || t.serial || t.uid || t.makerNote || t.gps || t.thumb) ? 'orient' : 'exif';
+
+  function fileMap(b, format) {
+    const parts = []; let end = b.length;   // [đầu, cuối, loại] của các khối không phải dữ liệu ảnh
+    if (format === 'jpeg') {
+      const r = jpegSegments(b);
+      for (const sg of r.segs) {
+        const k = jpegKind(b, sg);
+        if (k === 'img' || k === 'jfif' || k === 'adobe') continue;
+        parts.push([sg.s, sg.e, k === 'exif' ? exifKind(parseTiff(b, sg.d + 6, sg.e)) : k === 'xmp' || k === 'xmpx' ? 'xmp'
+          : k === 'jumbf' ? 'c2pa' : k === 'iptc' || k === 'icc' ? k : k === 'mpf' || k === 'jfxx' ? 'extra' : k === 'com' ? 'text' : 'other']);
+      }
+      if (!r.bad) end = r.end;
+    } else if (format === 'png') {
+      const r = pngChunks(b);
+      for (const c of r.chunks) {
+        const t = c.type;
+        if (!(b[c.s + 4] & 0x20) || PNG_KEEP.has(t)) continue;
+        const key = t === 'tEXt' || t === 'zTXt' || t === 'iTXt' ? L1.decode(b.subarray(c.d, Math.min(c.de, c.d + 80))).split('\0')[0] : '';
+        parts.push([c.s, c.e, t === 'caBX' ? 'c2pa' : t === 'iCCP' ? 'icc' : t === 'eXIf' ? exifKind(parseTiff(b, c.d, c.de))
+          : key ? (key === 'XML:com.adobe.xmp' ? 'xmp' : 'text') : 'other']);
+      }
+      end = r.end;
+    } else if (format === 'webp') {
+      const r = riffChunks(b);
+      for (const c of r.chunks) {
+        if (WEBP_KEEP.has(c.id)) continue;
+        parts.push([c.s, c.e, c.id === 'ICCP' ? 'icc' : c.id === 'EXIF' ? exifKind(webpExif(b, c)) : c.id === 'XMP ' ? 'xmp' : c.id === 'C2PA' ? 'c2pa' : 'other']);
+      }
+      end = r.end;
+    } else if (format === 'gif') {
+      for (const k of gifBlocks(b)) {
+        if (k.t === 'end') end = k.e;
+        if (k.t !== 'ext' || gifKeep(k, { keepIcc: false })) continue;
+        parts.push([k.s, k.e, k.label === 0xFE ? 'text' : k.app === 'XMP DataXMP' ? 'xmp' : k.app.startsWith('ICCRGBG1') ? 'icc' : 'other']);
+      }
+    } else {                                  // AVIF/HEIC/…: chỉ khoanh được hộp C2PA và gói XMP
+      const t = L1.decode(b), j = t.indexOf('jumb');
+      if (j >= 4 && t.indexOf('c2pa', j) > 0) { const len = u32be(b, j - 4); if (len > 8) parts.push([j - 4, Math.min(b.length, j - 4 + len), 'c2pa']); }
+      const x = t.indexOf('<x:xmpmeta'), y = x >= 0 ? t.indexOf('</x:xmpmeta>', x) : -1;
+      if (y > 0) parts.push([x, y + 12, 'xmp']);
+    }
+    parts.sort((p, q) => p[0] - q[0]);
+    const blocks = [];
+    const push = (kind, size) => {
+      if (size <= 0) return;
+      const l = blocks[blocks.length - 1];
+      if (l && l.kind === kind) l.size += size; else blocks.push({ kind, size });
+    };
+    let pos = 0;
+    for (const [s, e, k] of parts) { if (s < pos) continue; push('image', s - pos); push(k, e - s); pos = e; }
+    push('image', Math.min(end, b.length) - pos);
+    push('trailer', b.length - Math.max(end, pos));
+    return blocks;
+  }
+  function blockLevel(kind, findings) {
+    if (kind === 'image') return 'image';
+    if (kind === 'icc' || kind === 'orient') return 'keep';
+    const gs = BLOCK_GROUPS[kind] || [];
+    const hit = f => gs.some(g => f.group === g || f.group.endsWith('· ' + g) || f.group.startsWith(g + ' ·'));
+    return findings.some(f => f.level === 'ai' && hit(f)) ? 'ai' : 'meta';
+  }
+
   /* ---------- API ---------- */
   async function analyze(bytes) {
     const b = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
@@ -575,7 +646,13 @@
       out.push(F('meta', 'Lỗi', 'Không đọc hết được metadata (file có thể bị hỏng)'));
     }
     const seen = new Set(), findings = out.filter(f => { const k = f.group + '|' + f.label; return seen.has(k) ? false : seen.add(k); });
-    return { format, findings, orientation: info.orientation, hasAi: findings.some(f => f.level === 'ai') };
+    let blocks;
+    try {
+      blocks = fileMap(b, format).map(x => ({ kind: x.kind, name: BLOCK[x.kind], size: x.size, level: blockLevel(x.kind, findings) }));
+    } catch (e) {
+      blocks = [{ kind: 'image', name: BLOCK.image, size: b.length, level: 'image' }];
+    }
+    return { format, findings, blocks, size: b.length, orientation: info.orientation, hasAi: findings.some(f => f.level === 'ai') };
   }
 
   function strip(bytes, opts) {

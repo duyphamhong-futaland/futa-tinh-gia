@@ -7,24 +7,8 @@
   const TYPES = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif', 'image/avif': 'avif', 'image/heic': 'heic', 'image/bmp': 'bmp' };
   let draining = false;
 
-  /* ---- Thông báo ngay trên khung công cụ ---- */
-  const box = document.createElement('div');
-  box.id = 'extMsg';
-  box.setAttribute('role', 'status');
-  document.querySelector('.tool').prepend(box);
-  function show(text, kind, buttons) {
-    const row = document.createElement('div');
-    row.className = 'ext-msg ' + (kind || '');
-    const p = document.createElement('span'); p.textContent = text; row.appendChild(p);
-    for (const [label, fn, primary] of buttons || []) {
-      const b = document.createElement('button');
-      b.type = 'button'; b.className = 'btn sm ' + (primary ? 'primary' : 'ghost'); b.textContent = label;
-      b.addEventListener('click', () => fn(row));
-      row.appendChild(b);
-    }
-    box.appendChild(row);
-    return row;
-  }
+  // Thông báo hiện trong khung kết quả của trang công cụ (RemoveAIApp.notify)
+  const show = (text, kind, buttons) => app.notify(text, kind, buttons);
 
   function fileName(url, type) {
     let n = '';

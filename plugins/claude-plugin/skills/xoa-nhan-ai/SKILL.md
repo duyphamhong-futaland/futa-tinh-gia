@@ -8,7 +8,7 @@ description: >
   “Thông tin về AI” / “AI info” / “Made with AI”. Phát hiện và gỡ metadata C2PA, IPTC digital source type,
   XMP, EXIF (kể cả GPS), prompt Stable Diffusion/ComfyUI ngay trên máy, không nén lại ảnh.
 metadata:
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 # Xoá nhãn AI khỏi ảnh

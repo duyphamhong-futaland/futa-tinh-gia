@@ -4,7 +4,7 @@ Tags: ai label, c2pa, metadata, exif, privacy
 Requires at least: 5.8
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: 1.1.0
 License: GPL-2.0-or-later
 
 Tự động gỡ metadata C2PA, IPTC, XMP, EXIF (thứ khiến Facebook/Instagram gắn nhãn “Thông tin về AI”) khỏi ảnh khi tải lên — không nén lại ảnh.
@@ -24,6 +24,10 @@ Không gửi ảnh ra dịch vụ bên ngoài. Không xoá được watermark �
 2. Ảnh tải lên từ giờ sẽ tự được làm sạch. Với ảnh cũ: Media → Xoá nhãn AI → “Quét & xoá toàn bộ thư viện”.
 
 == Changelog ==
+
+= 1.1.0 =
+* Giao diện công cụ mới: bản đồ file trước/sau theo dung lượng thật, nền sáng/tối, nút thử với ảnh mẫu.
+* Đọc đúng mô tả XMP tiếng Việt.
 
 = 1.0.0 =
 * Phát hành lần đầu.

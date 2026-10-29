@@ -46,7 +46,7 @@ function toolPage({ head = '', scripts = '', pill = '' } = {}) {
   rep('src="../img/logo-futa-land-trans.png"', 'src="img/logo.png"');
   rep(/\s*<nav class="nav">[\s\S]*?<\/nav>/, '');
   if (head) rep('</head>', head + '\n</head>');
-  if (pill) rep(/(<li>🔎[^<]*<\/li>)/, '$1\n      ' + pill);
+  if (pill) rep(/(<li><b>Tự kiểm tra lại<\/b>[\s\S]*?<\/li>)/, '$1\n        ' + pill);
   if (scripts) rep(/(<script src="js\/app\.js[^"]*"><\/script>)/, '$1\n' + scripts);
   return h;
 }
@@ -55,6 +55,7 @@ function toolFiles(dst, page, pageName) {
   copy(path.join(ROOT, 'remove-ai/css/remove-ai.css'), path.join(dst, 'css/remove-ai.css'));
   copy(path.join(ROOT, 'remove-ai/js/meta.js'), path.join(dst, 'js/meta.js'));
   copy(path.join(ROOT, 'remove-ai/js/app.js'), path.join(dst, 'js/app.js'));
+  copy(path.join(ROOT, 'remove-ai/js/sample.js'), path.join(dst, 'js/sample.js'));
   copy(path.join(ROOT, 'img/logo-futa-land-trans.png'), path.join(dst, 'img/logo.png'));
   copy(path.join(ROOT, 'img/favicon.png'), path.join(dst, 'img/favicon.png'));
 }
@@ -68,9 +69,8 @@ const versions = {};
   const dst = path.join(BUILD, 'chrome');
   copyDir(path.join(SRC, 'chrome-extension'), dst);
   toolFiles(dst, toolPage({
-    head: '<link rel="stylesheet" href="css/ext.css?v=1">',
-    scripts: '<script src="js/ext.js?v=1"></script>',
-    pill: '<li>🖱 Chuột phải vào ảnh trên web → “Xoá nhãn AI khỏi ảnh này”</li>',
+    scripts: '<script src="js/ext.js?v=2"></script>',
+    pill: '<li><b>Chuột phải vào ảnh</b><span>Trên web → “Xoá nhãn AI khỏi ảnh này”</span></li>',
   }), 'tool.html');
   versions.chrome = JSON.parse(fs.readFileSync(path.join(dst, 'manifest.json'), 'utf8')).version;
   const n = zipDir(dst, path.join(DIST, 'futa-xoa-nhan-ai-chrome.zip'));

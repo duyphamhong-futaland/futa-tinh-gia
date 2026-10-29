@@ -1,6 +1,6 @@
 {
   "name": "futa-xoa-nhan-ai",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Xoá nhãn AI khỏi ảnh: phát hiện và gỡ metadata C2PA, IPTC, XMP, EXIF, prompt… khiến Facebook/Instagram gắn nhãn “Thông tin về AI”. Xử lý cục bộ, không nén lại ảnh.",
   "author": { "name": "FUTA Land" },
   "keywords": ["ai-label", "c2pa", "metadata", "exif", "image", "facebook"]
